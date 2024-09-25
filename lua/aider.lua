@@ -99,7 +99,7 @@ function M.setup(config)
 	end
 
 	_G.AiderOpen = M.AiderOpen
-	_G.AiderToggle = M.AiderToggle()
+	_G.AiderToggle = M.AiderToggle
 	_G.AiderBackground = M.AiderBackground
 	_G.aider_background_status = "idle"
 
