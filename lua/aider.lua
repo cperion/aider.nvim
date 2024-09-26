@@ -32,6 +32,7 @@ function M.AiderOpen(args, window_type)
 		command = helpers.add_buffers_to_command(command)
 		M.aider_job_id = vim.fn.termopen(command, { on_exit = OnExit })
 		M.aider_buf = vim.api.nvim_get_current_buf()
+		vim.api.nvim_buf_set_name(M.aider_buf, "Aider")
 		M.aider_win = vim.api.nvim_get_current_win()
 	end
 end
