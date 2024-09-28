@@ -1,4 +1,4 @@
-local helpers = require("helpers")
+local helpers = require("lua.helpers")
 local M = {}
 
 M.aider_buf = nil
