@@ -6,8 +6,7 @@ local default_config = {
   keys = {
     open = '<leader> ',
     toggle = '<leader>at',
-    background = '<leader>ab',
-    stop = '<leader>as',
+    -- Remove the 'stop' key
   },
 }
 

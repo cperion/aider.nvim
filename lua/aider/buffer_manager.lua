@@ -5,58 +5,20 @@ local BufferManager = {}
 local aider_buf = nil
 
 function BufferManager.setup()
-  -- Any setup needed for buffer management
+  -- No setup needed for now
 end
 
 function BufferManager.get_or_create_aider_buffer()
   if aider_buf and vim.api.nvim_buf_is_valid(aider_buf) then
-    -- Set the buffer as modifiable
-    vim.api.nvim_buf_set_option(aider_buf, "modifiable", true)
-    -- Clear the existing buffer
-    vim.api.nvim_buf_set_lines(aider_buf, 0, -1, false, {})
-    vim.api.nvim_buf_set_option(aider_buf, "modified", false)
+    return aider_buf
   else
     aider_buf = vim.api.nvim_create_buf(false, true)
-    vim.api.nvim_buf_set_option(aider_buf, "buftype", "nofile")
+    vim.api.nvim_buf_set_option(aider_buf, "buftype", "terminal")
     vim.api.nvim_buf_set_option(aider_buf, "buflisted", false)
     vim.api.nvim_buf_set_name(aider_buf, "Aider")
   end
 
-  -- Ensure the buffer is modifiable
-  vim.api.nvim_buf_set_option(aider_buf, "modifiable", true)
-
   return aider_buf
-end
-
-function BufferManager.on_buffer_open(bufnr)
-  if not config.get('auto_manage_context') then return end
-  
-  local bufname = vim.api.nvim_buf_get_name(bufnr)
-  local buftype = vim.api.nvim_buf_get_option(bufnr, "buftype")
-  
-  if BufferManager.should_include_in_context(bufname, buftype) then
-    local relative_filename = vim.fn.fnamemodify(bufname, ":~:.")
-    CommandExecutor.send_to_aider("/add " .. relative_filename)
-  end
-end
-
-function BufferManager.on_buffer_close(bufnr)
-  if not config.get('auto_manage_context') then return end
-  
-  local bufname = vim.api.nvim_buf_get_name(bufnr)
-  local buftype = vim.api.nvim_buf_get_option(bufnr, "buftype")
-  
-  if BufferManager.should_include_in_context(bufname, buftype) then
-    local relative_filename = vim.fn.fnamemodify(bufname, ":~:.")
-    CommandExecutor.send_to_aider("/drop " .. relative_filename)
-  end
-end
-
-function BufferManager.should_include_in_context(bufname, buftype)
-  return bufname ~= "" and
-         not bufname:match("^term://") and
-         buftype ~= "terminal" and
-         bufname ~= "Aider"
 end
 
 function BufferManager.get_context_buffers()
@@ -69,6 +31,13 @@ function BufferManager.get_context_buffers()
     end
   end
   return context_buffers
+end
+
+function BufferManager.should_include_in_context(bufname, buftype)
+  return bufname ~= "" and
+         not bufname:match("^term://") and
+         buftype ~= "terminal" and
+         bufname ~= "Aider"
 end
 
 return BufferManager

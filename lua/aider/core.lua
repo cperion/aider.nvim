@@ -5,8 +5,6 @@ local config = require('aider.config')
 
 local Aider = {}
 
-local aider_started = false
-
 function Aider.setup()
   WindowManager.setup()
   BufferManager.setup()
@@ -20,9 +18,8 @@ function Aider.open(args, layout)
   local buf = BufferManager.get_or_create_aider_buffer()
   WindowManager.show_aider_window(buf, layout or config.get('default_layout'))
   
-  if not aider_started then
+  if vim.api.nvim_buf_line_count(buf) == 1 and vim.api.nvim_buf_get_lines(buf, 0, -1, false)[1] == "" then
     CommandExecutor.start_aider(buf, args)
-    aider_started = true
   end
 end
 
@@ -34,28 +31,8 @@ function Aider.toggle(layout)
   end
 end
 
-function Aider.stop()
-  CommandExecutor.stop_aider()
-  aider_started = false
-  WindowManager.hide_aider_window()
-end
-
-function Aider.background(args, message)
-  CommandExecutor.run_aider_background(args, message)
-end
-
 function Aider.setup_autocommands()
-  vim.api.nvim_create_autocmd({"BufReadPost"}, {
-    callback = function(ev)
-      BufferManager.on_buffer_open(ev.buf)
-    end,
-  })
-  
-  vim.api.nvim_create_autocmd({"BufDelete"}, {
-    callback = function(ev)
-      BufferManager.on_buffer_close(ev.buf)
-    end,
-  })
+  -- You can keep or modify existing autocommands as needed
 end
 
 function Aider.setup_keybindings()
@@ -64,8 +41,7 @@ function Aider.setup_keybindings()
   
   keymap('n', config.get('keys.open'), ':lua require("aider.core").open()<CR>', opts)
   keymap('n', config.get('keys.toggle'), ':lua require("aider.core").toggle()<CR>', opts)
-  keymap('n', config.get('keys.background'), ':lua require("aider.core").background()<CR>', opts)
-  keymap('n', config.get('keys.stop'), ':lua require("aider.core").stop()<CR>', opts)
+  -- Remove the 'stop' keybinding
 end
 
 return Aider
