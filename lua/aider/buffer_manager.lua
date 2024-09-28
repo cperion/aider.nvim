@@ -12,9 +12,16 @@ function BufferManager.get_or_create_aider_buffer()
   if aider_buf and vim.api.nvim_buf_is_valid(aider_buf) then
     return aider_buf
   else
+    -- Create a new buffer with 'nofile' type
     aider_buf = vim.api.nvim_create_buf(false, true)
-    vim.api.nvim_buf_set_option(aider_buf, "buftype", "terminal")
+    
+    -- Set buffer name
     vim.api.nvim_buf_set_name(aider_buf, "Aider")
+    
+    -- Set buffer options
+    vim.api.nvim_buf_set_option(aider_buf, "bufhidden", "hide")
+    vim.api.nvim_buf_set_option(aider_buf, "swapfile", false)
+    vim.api.nvim_buf_set_option(aider_buf, "buflisted", false)
   end
 
   return aider_buf

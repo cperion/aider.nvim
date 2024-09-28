@@ -19,13 +19,15 @@ function CommandExecutor.start_aider(buf, args)
   -- Set the buffer as unmodified
   vim.api.nvim_buf_set_option(buf, "modified", false)
   
+  -- Create a terminal in the buffer
   vim.fn.termopen(command, {
     on_exit = function(job_id, exit_code, event_type)
       CommandExecutor.on_aider_exit(exit_code)
     end
   })
 
-  -- Set the buffer as non-modifiable after setup
+  -- Set terminal-specific options
+  vim.api.nvim_buf_set_option(buf, "buftype", "terminal")
   vim.api.nvim_buf_set_option(buf, "modifiable", false)
   
   vim.defer_fn(function()
