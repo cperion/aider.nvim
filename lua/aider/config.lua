@@ -7,6 +7,7 @@ local default_config = {
     open = '<leader> ',
     toggle = '<leader>at',
     background = '<leader>ab',
+    stop = '<leader>as',
   },
 }
 

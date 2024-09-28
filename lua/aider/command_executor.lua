@@ -9,7 +9,11 @@ function CommandExecutor.setup()
   -- Any setup needed for command execution
 end
 
-function CommandExecutor.run_aider(buf, args)
+function CommandExecutor.start_aider(buf, args)
+  if aider_job_id then
+    return  -- Aider is already running
+  end
+
   args = args or ""
   local command = "aider " .. args .. " " .. table.concat(BufferManager.get_context_buffers(), " ")
   
@@ -34,6 +38,13 @@ function CommandExecutor.run_aider(buf, args)
   vim.defer_fn(function()
     vim.cmd("startinsert")
   end, 100)
+end
+
+function CommandExecutor.stop_aider()
+  if aider_job_id then
+    vim.fn.jobstop(aider_job_id)
+    aider_job_id = nil
+  end
 end
 
 function CommandExecutor.run_aider_background(args, message)

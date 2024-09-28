@@ -5,6 +5,8 @@ local config = require('aider.config')
 
 local Aider = {}
 
+local aider_started = false
+
 function Aider.setup()
   WindowManager.setup()
   BufferManager.setup()
@@ -17,7 +19,11 @@ end
 function Aider.open(args, layout)
   local buf = BufferManager.get_or_create_aider_buffer()
   WindowManager.show_aider_window(buf, layout or config.get('default_layout'))
-  CommandExecutor.run_aider(buf, args)
+  
+  if not aider_started then
+    CommandExecutor.start_aider(buf, args)
+    aider_started = true
+  end
 end
 
 function Aider.toggle(layout)
@@ -26,6 +32,12 @@ function Aider.toggle(layout)
   else
     Aider.open(nil, layout)
   end
+end
+
+function Aider.stop()
+  CommandExecutor.stop_aider()
+  aider_started = false
+  WindowManager.hide_aider_window()
 end
 
 function Aider.background(args, message)
@@ -53,6 +65,7 @@ function Aider.setup_keybindings()
   keymap('n', config.get('keys.open'), ':lua require("aider.core").open()<CR>', opts)
   keymap('n', config.get('keys.toggle'), ':lua require("aider.core").toggle()<CR>', opts)
   keymap('n', config.get('keys.background'), ':lua require("aider.core").background()<CR>', opts)
+  keymap('n', config.get('keys.stop'), ':lua require("aider.core").stop()<CR>', opts)
 end
 
 return Aider
