@@ -27,17 +27,27 @@ function M.AiderOpen(args, layout)
     else
         -- Create a new buffer
         M.aider_buf = vim.api.nvim_create_buf(false, true)
-        vim.api.nvim_buf_set_option(M.aider_buf, 'buftype', 'nofile')
-        vim.api.nvim_buf_set_option(M.aider_buf, 'buflisted', false)
-        vim.api.nvim_buf_set_name(M.aider_buf, "Aider")
-
+        
         -- Show the buffer in the specified layout
         M.show_aider_window(layout)
 
-        -- Run Aider in the buffer
-        command = "aider " .. (args or "")
-        command = helpers.add_buffers_to_command(command)
-        M.aider_job_id = vim.fn.termopen(command, { on_exit = OnExit })
+        -- Use vim.schedule to ensure the terminal is properly initialized
+        vim.schedule(function()
+            -- Set buffer options
+            vim.api.nvim_buf_set_option(M.aider_buf, 'buftype', 'nofile')
+            vim.api.nvim_buf_set_option(M.aider_buf, 'buflisted', false)
+            vim.api.nvim_buf_set_name(M.aider_buf, "Aider")
+
+            -- Run Aider in the buffer
+            command = "aider " .. (args or "")
+            command = helpers.add_buffers_to_command(command)
+            M.aider_job_id = vim.fn.termopen(command, { on_exit = OnExit })
+
+            -- Enter insert mode after a short delay
+            vim.defer_fn(function()
+                vim.cmd('startinsert')
+            end, 100)
+        end)
     end
 end
 
