@@ -3,6 +3,7 @@ local BufferManager = require('aider.buffer_manager')
 local CommandExecutor = {}
 local aider_job_id = nil
 local current_context = {}
+local is_updating_context = false
 
 function CommandExecutor.setup()
   -- No setup needed for now
@@ -42,26 +43,54 @@ function CommandExecutor.start_aider(buf, args)
 end
 
 function CommandExecutor.update_aider_context()
-  if aider_job_id then
+  if aider_job_id and not is_updating_context then
+    is_updating_context = true
     local new_context = BufferManager.get_aider_context()
+    
+    -- Disable input
+    vim.fn.chansend(aider_job_id, "\x1b")  -- Send ESC to exit insert mode
+    
+    local commands = {}
     
     -- Files to add (in new_context but not in current_context)
     for _, file in ipairs(new_context) do
       if not vim.tbl_contains(current_context, file) then
-        vim.fn.chansend(aider_job_id, "/add " .. file .. "\n")
+        table.insert(commands, "/add " .. file)
       end
     end
     
     -- Files to drop (in current_context but not in new_context)
     for _, file in ipairs(current_context) do
       if not vim.tbl_contains(new_context, file) then
-        vim.fn.chansend(aider_job_id, "/drop " .. file .. "\n")
+        table.insert(commands, "/drop " .. file)
       end
     end
     
-    -- Update the current_context
-    current_context = vim.deepcopy(new_context)
+    -- Execute commands sequentially
+    CommandExecutor.execute_commands(commands, function()
+      -- Update the current_context
+      current_context = vim.deepcopy(new_context)
+      is_updating_context = false
+      
+      -- Re-enable input
+      vim.fn.chansend(aider_job_id, "i")  -- Enter insert mode
+    end)
   end
+end
+
+function CommandExecutor.execute_commands(commands, callback)
+  if #commands == 0 then
+    callback()
+    return
+  end
+  
+  local command = table.remove(commands, 1)
+  vim.fn.chansend(aider_job_id, command .. "\n")
+  
+  -- Wait for command to complete (adjust timeout as needed)
+  vim.defer_fn(function()
+    CommandExecutor.execute_commands(commands, callback)
+  end, 500)  -- 500ms delay between commands
 end
 
 function CommandExecutor.on_aider_exit(exit_code)
