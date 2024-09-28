@@ -1,1 +1,0 @@
--- This file is no longer needed as keybindings are now set up in the core module
