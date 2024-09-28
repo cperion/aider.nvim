@@ -2,7 +2,7 @@ return {
   "cperion/aider.nvim",
   opts = {
     auto_manage_context = true,
-    default_layout = "float",
+    default_layout = "vsplit",
     keys = {
       open = "<leader>ao",
       toggle = "<leader>at",
@@ -20,7 +20,7 @@ return {
     {
       "<leader>ao",
       function()
-        require("aider.core").open()
+        require("aider.core").open("vsplit")
       end,
       desc = "Open Aider",
     },
