@@ -88,12 +88,12 @@ function M.AiderHide()
     end
 end
 
-function M.AiderToggle()
-	if M.aider_win then
-		M.AiderHide()
-	else
-		M.AiderOpen()
-	end
+function M.AiderToggle(layout)
+    if M.aider_win then
+        M.AiderHide()
+    else
+        M.AiderOpen(nil, layout)
+    end
 end
 
 function M.AiderOnBufferOpen(bufnr)
@@ -145,7 +145,9 @@ function M.setup(config)
     end
 
     _G.AiderOpen = M.AiderOpen
-    _G.AiderToggle = M.AiderToggle
+    _G.AiderToggle = function(layout)
+        M.AiderToggle(layout)
+    end
     _G.AiderBackground = M.AiderBackground
     _G.aider_background_status = "idle"
 
