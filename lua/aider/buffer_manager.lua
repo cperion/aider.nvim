@@ -14,7 +14,6 @@ function BufferManager.get_or_create_aider_buffer()
   else
     aider_buf = vim.api.nvim_create_buf(false, true)
     vim.api.nvim_buf_set_option(aider_buf, "buftype", "terminal")
-    vim.api.nvim_buf_set_option(aider_buf, "buflisted", false)
     vim.api.nvim_buf_set_name(aider_buf, "Aider")
   end
 
