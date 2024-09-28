@@ -4,6 +4,7 @@ local CommandExecutor = require('aider.command_executor')
 local config = require('aider.config')
 
 local Aider = {}
+local update_timer = nil
 
 function Aider.setup()
   WindowManager.setup()
@@ -32,7 +33,22 @@ function Aider.toggle(layout)
 end
 
 function Aider.setup_autocommands()
-  -- You can keep or modify existing autocommands as needed
+  vim.cmd([[
+    augroup AiderSync
+      autocmd!
+      autocmd BufEnter,BufLeave,BufWritePost * lua require('aider.core').debounce_update()
+    augroup END
+  ]])
+end
+
+function Aider.debounce_update()
+  if update_timer then
+    vim.fn.timer_stop(update_timer)
+  end
+  update_timer = vim.fn.timer_start(1000, function()
+    BufferManager.update_context()
+    CommandExecutor.update_aider_context()
+  end)
 end
 
 function Aider.setup_keybindings()
@@ -41,7 +57,6 @@ function Aider.setup_keybindings()
   
   keymap('n', config.get('keys.open'), ':lua require("aider.core").open()<CR>', opts)
   keymap('n', config.get('keys.toggle'), ':lua require("aider.core").toggle()<CR>', opts)
-  -- Remove the 'stop' keybinding
 end
 
 return Aider
