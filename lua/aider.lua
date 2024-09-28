@@ -15,33 +15,55 @@ function M.AiderBackground(args, message)
 end
 
 function OnExit(code, signal)
-	if M.aider_buf then
-		vim.api.nvim_command("bd! " .. M.aider_buf)
-		M.aider_buf = nil
-	end
+    M.aider_buf = nil
 end
 
-function M.AiderOpen(args, window_type)
-	window_type = window_type or "vsplit"
-	if M.aider_buf and vim.api.nvim_buf_is_valid(M.aider_buf) then
-		helpers.open_buffer_in_new_window(window_type, M.aider_buf)
-		M.aider_win = vim.api.nvim_get_current_win()
-	else
-		command = "aider " .. (args or "")
-		helpers.open_window(window_type)
-		command = helpers.add_buffers_to_command(command)
-		M.aider_job_id = vim.fn.termopen(command, { on_exit = OnExit })
-		M.aider_buf = vim.api.nvim_get_current_buf()
-		vim.api.nvim_buf_set_name(M.aider_buf, "Aider")
-		M.aider_win = vim.api.nvim_get_current_win()
-	end
+function M.AiderOpen(args)
+    if M.aider_buf and vim.api.nvim_buf_is_valid(M.aider_buf) then
+        -- If the buffer exists, just show it in a floating window
+        M.show_aider_float()
+    else
+        -- Create a new buffer
+        M.aider_buf = vim.api.nvim_create_buf(false, true)
+        vim.api.nvim_buf_set_option(M.aider_buf, 'buftype', 'nofile')
+        vim.api.nvim_buf_set_option(M.aider_buf, 'buflisted', false)
+        vim.api.nvim_buf_set_name(M.aider_buf, "Aider")
+
+        -- Show the buffer in a floating window
+        M.show_aider_float()
+
+        -- Run Aider in the buffer
+        command = "aider " .. (args or "")
+        command = helpers.add_buffers_to_command(command)
+        M.aider_job_id = vim.fn.termopen(command, { on_exit = OnExit })
+    end
+end
+
+function M.show_aider_float()
+    local width = math.floor(vim.o.columns * 0.8)
+    local height = math.floor(vim.o.lines * 0.8)
+    local row = math.floor((vim.o.lines - height) / 2)
+    local col = math.floor((vim.o.columns - width) / 2)
+
+    local opts = {
+        relative = 'editor',
+        width = width,
+        height = height,
+        row = row,
+        col = col,
+        style = 'minimal',
+        border = 'rounded'
+    }
+
+    M.aider_win = vim.api.nvim_open_win(M.aider_buf, true, opts)
+    vim.api.nvim_win_set_option(M.aider_win, 'winblend', 0)
 end
 
 function M.AiderHide()
-	if M.aider_win then
-		vim.api.nvim_win_close(M.aider_win, true)
-		M.aider_win = nil
-	end
+    if M.aider_win and vim.api.nvim_win_is_valid(M.aider_win) then
+        vim.api.nvim_win_close(M.aider_win, true)
+        M.aider_win = nil
+    end
 end
 
 function M.AiderToggle()
