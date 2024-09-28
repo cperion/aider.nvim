@@ -10,13 +10,15 @@ end
 
 function BufferManager.get_or_create_aider_buffer()
   if aider_buf and vim.api.nvim_buf_is_valid(aider_buf) then
-    return aider_buf
+    -- Clear the existing buffer
+    vim.api.nvim_buf_set_lines(aider_buf, 0, -1, false, {})
+    vim.api.nvim_buf_set_option(aider_buf, "modified", false)
+  else
+    aider_buf = vim.api.nvim_create_buf(false, true)
+    vim.api.nvim_buf_set_option(aider_buf, "buftype", "nofile")
+    vim.api.nvim_buf_set_option(aider_buf, "buflisted", false)
+    vim.api.nvim_buf_set_name(aider_buf, "Aider")
   end
-
-  aider_buf = vim.api.nvim_create_buf(false, true)
-  vim.api.nvim_buf_set_option(aider_buf, "buftype", "nofile")
-  vim.api.nvim_buf_set_option(aider_buf, "buflisted", false)
-  vim.api.nvim_buf_set_name(aider_buf, "Aider")
 
   return aider_buf
 end

@@ -13,6 +13,12 @@ function CommandExecutor.run_aider(buf, args)
   args = args or ""
   local command = "aider " .. args .. " " .. table.concat(BufferManager.get_context_buffers(), " ")
   
+  -- Clear the buffer content
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, {})
+  
+  -- Set the buffer as unmodified
+  vim.api.nvim_buf_set_option(buf, "modified", false)
+  
   aider_job_id = vim.fn.termopen(command, {
     on_exit = function(job_id, exit_code, event_type)
       CommandExecutor.on_aider_exit(exit_code)
