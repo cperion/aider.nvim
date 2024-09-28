@@ -18,10 +18,12 @@ function OnExit(code, signal)
     M.aider_buf = nil
 end
 
-function M.AiderOpen(args)
+function M.AiderOpen(args, layout)
+    layout = layout or M.config.default_layout or "float"
+    
     if M.aider_buf and vim.api.nvim_buf_is_valid(M.aider_buf) then
-        -- If the buffer exists, just show it in a floating window
-        M.show_aider_float()
+        -- If the buffer exists, just show it in the specified layout
+        M.show_aider_window(layout)
     else
         -- Create a new buffer
         M.aider_buf = vim.api.nvim_create_buf(false, true)
@@ -29,8 +31,8 @@ function M.AiderOpen(args)
         vim.api.nvim_buf_set_option(M.aider_buf, 'buflisted', false)
         vim.api.nvim_buf_set_name(M.aider_buf, "Aider")
 
-        -- Show the buffer in a floating window
-        M.show_aider_float()
+        -- Show the buffer in the specified layout
+        M.show_aider_window(layout)
 
         -- Run Aider in the buffer
         command = "aider " .. (args or "")
@@ -39,24 +41,34 @@ function M.AiderOpen(args)
     end
 end
 
-function M.show_aider_float()
-    local width = math.floor(vim.o.columns * 0.8)
-    local height = math.floor(vim.o.lines * 0.8)
-    local row = math.floor((vim.o.lines - height) / 2)
-    local col = math.floor((vim.o.columns - width) / 2)
+function M.show_aider_window(layout)
+    if layout == "float" then
+        local width = math.floor(vim.o.columns * 0.8)
+        local height = math.floor(vim.o.lines * 0.8)
+        local row = math.floor((vim.o.lines - height) / 2)
+        local col = math.floor((vim.o.columns - width) / 2)
 
-    local opts = {
-        relative = 'editor',
-        width = width,
-        height = height,
-        row = row,
-        col = col,
-        style = 'minimal',
-        border = 'rounded'
-    }
+        local opts = {
+            relative = 'editor',
+            width = width,
+            height = height,
+            row = row,
+            col = col,
+            style = 'minimal',
+            border = 'rounded'
+        }
 
-    M.aider_win = vim.api.nvim_open_win(M.aider_buf, true, opts)
-    vim.api.nvim_win_set_option(M.aider_win, 'winblend', 0)
+        M.aider_win = vim.api.nvim_open_win(M.aider_buf, true, opts)
+        vim.api.nvim_win_set_option(M.aider_win, 'winblend', 0)
+    elseif layout == "vsplit" then
+        vim.cmd("vsplit")
+        M.aider_win = vim.api.nvim_get_current_win()
+        vim.api.nvim_win_set_buf(M.aider_win, M.aider_buf)
+    elseif layout == "hsplit" then
+        vim.cmd("split")
+        M.aider_win = vim.api.nvim_get_current_win()
+        vim.api.nvim_win_set_buf(M.aider_win, M.aider_buf)
+    end
 end
 
 function M.AiderHide()
@@ -75,20 +87,20 @@ function M.AiderToggle()
 end
 
 function M.AiderOnBufferOpen(bufnr)
-	if not vim.g.aider_buffer_sync or vim.g.aider_buffer_sync == 0 then
-		return
-	end
-	bufnr = tonumber(bufnr)
-	local bufname = vim.api.nvim_buf_get_name(bufnr)
-	local buftype = vim.fn.getbufvar(bufnr, "&buftype")
-	if not bufname or bufname:match("^term://") or buftype == "terminal" then
-		return
-	end
-	local relative_filename = vim.fn.fnamemodify(bufname, ":~:.")
-	if M.aider_buf and vim.api.nvim_buf_is_valid(M.aider_buf) then
-		local line_to_add = "/add " .. relative_filename
-		vim.fn.chansend(M.aider_job_id, line_to_add .. "\n")
-	end
+    if not vim.g.aider_buffer_sync or vim.g.aider_buffer_sync == 0 then
+        return
+    end
+    bufnr = tonumber(bufnr)
+    local bufname = vim.api.nvim_buf_get_name(bufnr)
+    local buftype = vim.fn.getbufvar(bufnr, "&buftype")
+    if not bufname or bufname:match("^term://") or buftype == "terminal" or bufname == "Aider" then
+        return
+    end
+    local relative_filename = vim.fn.fnamemodify(bufname, ":~:.")
+    if M.aider_buf and vim.api.nvim_buf_is_valid(M.aider_buf) then
+        local line_to_add = "/add " .. relative_filename
+        vim.fn.chansend(M.aider_job_id, line_to_add .. "\n")
+    end
 end
 
 function M.AiderOnBufferClose(bufnr)
@@ -108,27 +120,28 @@ function M.AiderOnBufferClose(bufnr)
 end
 
 function M.setup(config)
-	M.config = config or {}
-	M.config.auto_manage_context = M.config.auto_manage_context or true
-	M.config.default_bindings = M.config.default_bindings or true
+    M.config = config or {}
+    M.config.auto_manage_context = M.config.auto_manage_context or true
+    M.config.default_bindings = M.config.default_bindings or true
+    M.config.default_layout = M.config.default_layout or "float"
 
-	vim.g.aider_buffer_sync = M.config.auto_manage_context
+    vim.g.aider_buffer_sync = M.config.auto_manage_context
 
-	if M.config.auto_manage_context then
-		vim.api.nvim_command('autocmd BufReadPost * lua AiderOnBufferOpen(vim.fn.expand("<abuf>"))')
-		vim.api.nvim_command('autocmd BufDelete * lua AiderOnBufferClose(vim.fn.expand("<abuf>"))')
-		_G.AiderOnBufferOpen = M.AiderOnBufferOpen
-		_G.AiderOnBufferClose = M.AiderOnBufferClose
-	end
+    if M.config.auto_manage_context then
+        vim.api.nvim_command('autocmd BufReadPost * lua AiderOnBufferOpen(vim.fn.expand("<abuf>"))')
+        vim.api.nvim_command('autocmd BufDelete * lua AiderOnBufferClose(vim.fn.expand("<abuf>"))')
+        _G.AiderOnBufferOpen = M.AiderOnBufferOpen
+        _G.AiderOnBufferClose = M.AiderOnBufferClose
+    end
 
-	_G.AiderOpen = M.AiderOpen
-	_G.AiderToggle = M.AiderToggle
-	_G.AiderBackground = M.AiderBackground
-	_G.aider_background_status = "idle"
+    _G.AiderOpen = M.AiderOpen
+    _G.AiderToggle = M.AiderToggle
+    _G.AiderBackground = M.AiderBackground
+    _G.aider_background_status = "idle"
 
-	if M.config.default_bindings then
-		require("keybindings")
-	end
+    if M.config.default_bindings then
+        require("keybindings")
+    end
 end
 
 return M
