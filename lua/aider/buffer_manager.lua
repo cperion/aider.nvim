@@ -10,6 +10,8 @@ end
 
 function BufferManager.get_or_create_aider_buffer()
   if aider_buf and vim.api.nvim_buf_is_valid(aider_buf) then
+    -- Set the buffer as modifiable
+    vim.api.nvim_buf_set_option(aider_buf, "modifiable", true)
     -- Clear the existing buffer
     vim.api.nvim_buf_set_lines(aider_buf, 0, -1, false, {})
     vim.api.nvim_buf_set_option(aider_buf, "modified", false)
@@ -19,6 +21,9 @@ function BufferManager.get_or_create_aider_buffer()
     vim.api.nvim_buf_set_option(aider_buf, "buflisted", false)
     vim.api.nvim_buf_set_name(aider_buf, "Aider")
   end
+
+  -- Ensure the buffer is modifiable
+  vim.api.nvim_buf_set_option(aider_buf, "modifiable", true)
 
   return aider_buf
 end

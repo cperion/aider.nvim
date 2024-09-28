@@ -13,6 +13,9 @@ function CommandExecutor.run_aider(buf, args)
   args = args or ""
   local command = "aider " .. args .. " " .. table.concat(BufferManager.get_context_buffers(), " ")
   
+  -- Ensure the buffer is modifiable
+  vim.api.nvim_buf_set_option(buf, "modifiable", true)
+  
   -- Clear the buffer content
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, {})
   
@@ -25,6 +28,7 @@ function CommandExecutor.run_aider(buf, args)
     end
   })
 
+  -- Set the buffer as non-modifiable after setup
   vim.api.nvim_buf_set_option(buf, "modifiable", false)
   
   vim.defer_fn(function()
