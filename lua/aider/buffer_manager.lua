@@ -57,7 +57,7 @@ function BufferManager.get_context_buffers()
   for _, buf in ipairs(vim.api.nvim_list_bufs()) do
     local bufname = vim.api.nvim_buf_get_name(buf)
     local buftype = vim.api.nvim_buf_get_option(buf, "buftype")
-    if BufferManager.should_include_in_context(bufname, buftype) then
+    if BufferManager.should_include_in_context(bufname, buftype) and buf ~= aider_buf then
       table.insert(context_buffers, bufname)
     end
   end
