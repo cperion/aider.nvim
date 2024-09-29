@@ -49,4 +49,15 @@ function BufferManager.get_aider_context()
 	return vim.deepcopy(aider_context)
 end
 
+function BufferManager.get_files_to_drop()
+    local current_buffers = BufferManager.get_context_buffers()
+    local files_to_drop = {}
+    for _, file in ipairs(aider_context) do
+        if not vim.tbl_contains(current_buffers, file) then
+            table.insert(files_to_drop, file)
+        end
+    end
+    return files_to_drop
+end
+
 return BufferManager

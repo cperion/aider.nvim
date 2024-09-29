@@ -33,22 +33,28 @@ function Aider.toggle(layout)
 end
 
 function Aider.setup_autocommands()
-	vim.cmd([[
+    vim.cmd([[
     augroup AiderSync
       autocmd!
       autocmd BufEnter,BufLeave,BufWritePost * lua require('aider.core').debounce_update()
+      autocmd BufEnter Aider lua require('aider.core').on_aider_buffer_enter()
     augroup END
   ]])
 end
 
 function Aider.debounce_update()
-	if update_timer then
-		vim.fn.timer_stop(update_timer)
-	end
-	update_timer = vim.fn.timer_start(1000, function()
-		BufferManager.update_context()
-		CommandExecutor.update_aider_context()
-	end)
+    if update_timer then
+        vim.fn.timer_stop(update_timer)
+    end
+    update_timer = vim.fn.timer_start(1000, function()
+        BufferManager.update_context()
+        CommandExecutor.update_aider_context()
+    end)
+end
+
+function Aider.on_aider_buffer_enter()
+    BufferManager.update_context()
+    CommandExecutor.update_aider_context()
 end
 
 function Aider.setup_keybindings()
