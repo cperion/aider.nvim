@@ -28,7 +28,7 @@ local function log(level, message, correlation_id)
     local log_message = string.format(
       "[%s] %s: %s",
       os.date("%Y-%m-%d %H:%M:%S"),
-      level,
+      tostring(level),
       tostring(message)
     )
     if correlation_id then

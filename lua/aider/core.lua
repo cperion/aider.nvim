@@ -84,9 +84,9 @@ end
 function Aider.debounce_update()
   if update_timer then
     pcall(function()
-      if update_timer.stop then
+      if type(update_timer) == "table" and update_timer.stop then
         update_timer:stop()
-      elseif vim.loop.timer_stop then
+      elseif type(update_timer) == "userdata" and vim.loop.timer_stop then
         vim.loop.timer_stop(update_timer)
       end
     end)
