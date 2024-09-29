@@ -109,11 +109,11 @@ function Aider.setup_keybindings()
     local open_key = config.get("keys.open") or "<leader> "
     local toggle_key = config.get("keys.toggle") or "<leader>at"
 
-    vim.keymap.set("n", open_key, function()
+    vim.keymap.set("n", tostring(open_key), function()
         require("aider.core").open()
     end, { silent = true })
 
-    vim.keymap.set("n", toggle_key, function()
+    vim.keymap.set("n", tostring(toggle_key), function()
         require("aider.core").toggle()
     end, { silent = true })
 end
