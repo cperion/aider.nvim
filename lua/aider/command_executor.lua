@@ -30,7 +30,7 @@ function CommandExecutor.start_aider(buf, args)
     Logger.debug("Command: " .. vim.inspect(command), correlation_id)
 
     -- Ensure the buffer is modifiable and clear it
-    vim.api.nvim_set_option_value('modifiable', true, {buf = buf})
+    vim.api.nvim_buf_set_option(buf, 'modifiable', true)
     vim.api.nvim_buf_set_lines(buf, 0, -1, false, {})
 
     -- Start the job
@@ -41,7 +41,9 @@ function CommandExecutor.start_aider(buf, args)
             Logger.debug("Aider job exited with code: " .. tostring(exit_code), correlation_id)
             CommandExecutor.on_aider_exit(exit_code)
         end,
-        pty = true,  -- This enables full terminal emulation
+        pty = true,
+        stderr_buffered = false,
+        stdout_buffered = false,
     })
 
     if aider_job_id <= 0 then
@@ -50,8 +52,8 @@ function CommandExecutor.start_aider(buf, args)
     end
 
     -- Set buffer-specific options
-    vim.api.nvim_set_option_value('buftype', 'terminal', {buf = buf})
-    vim.api.nvim_set_option_value('swapfile', false, {buf = buf})
+    vim.api.nvim_buf_set_option(buf, 'buftype', 'terminal')
+    vim.api.nvim_buf_set_option(buf, 'swapfile', false)
     vim.api.nvim_buf_set_name(buf, "Aider")
 
     aider_buf = buf
@@ -63,9 +65,23 @@ end
 function CommandExecutor.on_output(buf, data)
     if data then
         vim.schedule(function()
-            vim.api.nvim_set_option_value('modifiable', true, {buf = buf})
-            vim.api.nvim_buf_set_lines(buf, -1, -1, false, data)
-            vim.api.nvim_set_option_value('modifiable', false, {buf = buf})
+            -- Filter out empty lines
+            local non_empty_lines = vim.tbl_filter(function(line)
+                return line ~= ""
+            end, data)
+            
+            if #non_empty_lines > 0 then
+                vim.api.nvim_buf_set_option(buf, 'modifiable', true)
+                vim.api.nvim_buf_set_lines(buf, -1, -1, false, non_empty_lines)
+                vim.api.nvim_buf_set_option(buf, 'modifiable', false)
+                
+                -- Scroll to the bottom of the buffer
+                local win = vim.fn.bufwinid(buf)
+                if win ~= -1 then
+                    local line_count = vim.api.nvim_buf_line_count(buf)
+                    vim.api.nvim_win_set_cursor(win, {line_count, 0})
+                end
+            end
         end)
     end
 end
