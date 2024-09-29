@@ -3,32 +3,15 @@ local ContextManager = require("aider.context_manager")
 
 local CommandExecutor = {}
 local aider_job_id = nil
-local user_input = ""
 
 function CommandExecutor.setup()
     -- No setup needed for now
-end
-
-function CommandExecutor.save_user_input()
-    if aider_job_id then
-        -- Save the current input line
-        vim.api.nvim_chan_send(aider_job_id, "\27[A\27[0G\27[s")
-        user_input = vim.fn.getline('.')
-        vim.api.nvim_chan_send(aider_job_id, "\27[u\27[B")
-    end
 end
 
 function CommandExecutor.clear_input_line()
     if aider_job_id then
         -- Clear the current input line
         vim.api.nvim_chan_send(aider_job_id, "\27[A\27[K\r")
-    end
-end
-
-function CommandExecutor.restore_user_input()
-    if aider_job_id and user_input ~= "" then
-        -- Restore the saved user input
-        vim.api.nvim_chan_send(aider_job_id, user_input)
     end
 end
 
@@ -84,20 +67,12 @@ end
 
 function CommandExecutor.execute_commands(commands)
     if aider_job_id then
-        -- Save the user's input
-        CommandExecutor.save_user_input()
-        
         -- Clear the input line
         CommandExecutor.clear_input_line()
         
         -- Execute the commands
         local command_string = table.concat(commands, "\n") .. "\n"
         vim.api.nvim_chan_send(aider_job_id, command_string)
-        
-        -- Restore the user's input after a short delay
-        vim.defer_fn(function()
-            CommandExecutor.restore_user_input()
-        end, 100)
     else
         vim.notify("Aider job is not running", vim.log.levels.WARN)
     end
