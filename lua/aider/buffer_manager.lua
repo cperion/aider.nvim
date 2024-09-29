@@ -4,6 +4,9 @@ local aider_context = {}
 
 function BufferManager.setup()
 	BufferManager.update_context()
+	if not aider_buf or not vim.api.nvim_buf_is_valid(aider_buf) then
+		aider_buf = BufferManager.get_or_create_aider_buffer()
+	end
 end
 
 function BufferManager.get_or_create_aider_buffer()
