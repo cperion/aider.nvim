@@ -83,21 +83,15 @@ end
 
 function Aider.debounce_update()
     if update_timer then
-        update_timer:stop()
+        vim.loop.timer_stop(update_timer)
     end
-    local timer_ok, new_timer = pcall(vim.loop.new_timer)
-    if not timer_ok then
-        Logger.error("Failed to create timer: " .. tostring(new_timer))
-        return
-    end
-    update_timer = new_timer
-    update_timer:start(1000, 0, vim.schedule_wrap(function()
+    update_timer = vim.defer_fn(function()
         local new_context = BufferManager.get_context_buffers()
         if not vim.deep_equal(BufferManager.get_aider_context(), new_context) then
             BufferManager.update_context()
             CommandExecutor.update_aider_context()
         end
-    end))
+    end, 1000)
 end
 
 function Aider.on_aider_buffer_enter()

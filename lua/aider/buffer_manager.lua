@@ -51,7 +51,7 @@ end
 function BufferManager.update_context()
     local correlation_id = Logger.generate_correlation_id()
     Logger.debug("Updating context", correlation_id)
-    local start_time = vim.loop.hrtime()
+    local start_time = os.clock() * 1000
     local new_context = BufferManager.get_context_buffers()
     Logger.debug("Current context: " .. vim.inspect(aider_context), correlation_id)
     Logger.debug("New context: " .. vim.inspect(new_context), correlation_id)
@@ -62,8 +62,8 @@ function BufferManager.update_context()
     else
         Logger.debug("Context unchanged, no update needed", correlation_id)
     end
-    local end_time = vim.loop.hrtime()
-    Logger.debug(string.format("Context update operation took %.3f ms", (end_time - start_time) / 1e6), correlation_id)
+    local end_time = os.clock() * 1000
+    Logger.debug(string.format("Context update operation took %.3f ms", (end_time - start_time)), correlation_id)
 end
 
 function BufferManager.get_aider_context()

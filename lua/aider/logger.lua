@@ -25,7 +25,8 @@ end
 
 local function log(level, message, correlation_id)
     if log_levels[level] >= current_log_level then
-        local log_message = string.format("[%s] %s: %s", os.date("%Y-%m-%d %H:%M:%S"), level, tostring(message))
+        local log_message = string.format("[%s] %s: %s", os.date("%Y-%m-%d %H:%M:%S"), level, 
+            type(message) == "string" and message or vim.inspect(message))
         if correlation_id then
             log_message = log_message .. " [CorrelationID: " .. tostring(correlation_id) .. "]"
         end
