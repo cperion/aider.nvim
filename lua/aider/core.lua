@@ -80,26 +80,38 @@ function Aider.setup_autocommands()
 end
 
 function Aider.debounce_update()
-  if update_timer then
-    update_timer:stop()
-    update_timer:close()
-  end
-  
-  local debounce_ms = config.get("update_debounce_ms")
-  if type(debounce_ms) ~= "number" then
-    debounce_ms = 1000  -- default to 1000ms if not a number
-  end
-  
-  update_timer = vim.loop.new_timer()
-  update_timer:start(debounce_ms, 0, vim.schedule_wrap(function()
-    local new_context = BufferManager.get_context_buffers()
-    if not vim.deep_equal(BufferManager.get_aider_context(), new_context) then
-      BufferManager.update_context()
-      CommandExecutor.update_aider_context()
+  local success, error_msg = pcall(function()
+    if update_timer then
+      if not update_timer:is_closing() then
+        update_timer:stop()
+        update_timer:close()
+      end
+      update_timer = nil
     end
-    update_timer:stop()
-    update_timer:close()
-  end))
+    
+    local debounce_ms = config.get("update_debounce_ms")
+    if type(debounce_ms) ~= "number" then
+      debounce_ms = 1000  -- default to 1000ms if not a number
+    end
+    
+    update_timer = vim.loop.new_timer()
+    update_timer:start(debounce_ms, 0, vim.schedule_wrap(function()
+      local new_context = BufferManager.get_context_buffers()
+      if not vim.deep_equal(BufferManager.get_aider_context(), new_context) then
+        BufferManager.update_context()
+        CommandExecutor.update_aider_context()
+      end
+      if update_timer and not update_timer:is_closing() then
+        update_timer:stop()
+        update_timer:close()
+      end
+      update_timer = nil
+    end))
+  end)
+
+  if not success then
+    Logger.error("Error in debounce_update: " .. tostring(error_msg))
+  end
 end
 
 function Aider.on_aider_buffer_enter()
