@@ -18,30 +18,15 @@ function CommandExecutor.start_aider(buf, args)
 
     Logger.info("Starting Aider", correlation_id)
     Logger.debug("Command: " .. command, correlation_id)
-    Logger.debug("Context buffers: " .. vim.inspect(context_buffers), correlation_id)
-    aider_buf = buf
 
-    -- Ensure the buffer is modifiable
+    -- Ensure the buffer is modifiable and clear it
     vim.api.nvim_buf_set_option(buf, 'modifiable', true)
-
-    -- Clear the buffer content
     vim.api.nvim_buf_set_lines(buf, 0, -1, false, {})
-
-    -- Set up the command output callback
-    local function on_output(_, data)
-        if data then
-            vim.schedule(function()
-                vim.api.nvim_buf_set_option(buf, 'modifiable', true)
-                vim.api.nvim_buf_set_lines(buf, -1, -1, false, data)
-                vim.api.nvim_buf_set_option(buf, 'modifiable', false)
-            end)
-        end
-    end
 
     -- Start the job
     aider_job_id = vim.fn.jobstart(command, {
-        on_stdout = on_output,
-        on_stderr = on_output,
+        on_stdout = function(_, data) CommandExecutor.on_output(buf, data) end,
+        on_stderr = function(_, data) CommandExecutor.on_output(buf, data) end,
         on_exit = function(_, exit_code)
             Logger.debug("Aider job exited with code: " .. tostring(exit_code), correlation_id)
             CommandExecutor.on_aider_exit(exit_code)
@@ -58,10 +43,20 @@ function CommandExecutor.start_aider(buf, args)
     vim.api.nvim_buf_set_option(buf, 'swapfile', false)
     vim.api.nvim_buf_set_name(buf, "Aider")
 
-    -- Initialize the context
+    aider_buf = buf
     ContextManager.update(context_buffers)
 
     Logger.info("Aider started successfully", correlation_id)
+end
+
+function CommandExecutor.on_output(buf, data)
+    if data then
+        vim.schedule(function()
+            vim.api.nvim_buf_set_option(buf, 'modifiable', true)
+            vim.api.nvim_buf_set_lines(buf, -1, -1, false, data)
+            vim.api.nvim_buf_set_option(buf, 'modifiable', false)
+        end)
+    end
 end
 
 function CommandExecutor.update_aider_context()

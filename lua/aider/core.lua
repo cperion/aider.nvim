@@ -24,10 +24,8 @@ end
 function Aider.open(args, layout)
     local correlation_id = Logger.generate_correlation_id()
     Logger.debug("Opening Aider window", correlation_id)
-    Logger.debug("Args: " .. vim.inspect(args) .. ", Layout: " .. tostring(layout), correlation_id)
-    local buf = BufferManager.get_aider_buffer()
     
-    -- Use the provided layout or the default vsplit layout
+    local buf = BufferManager.get_aider_buffer()
     local used_layout = layout or current_layout
     WindowManager.show_window(buf, used_layout)
 
@@ -80,38 +78,22 @@ function Aider.setup_autocommands()
 end
 
 function Aider.debounce_update()
-  local success, error_msg = pcall(function()
-    if update_timer then
-      if not update_timer:is_closing() then
-        update_timer:stop()
-        update_timer:close()
-      end
-      update_timer = nil
-    end
-    
-    local debounce_ms = config.get("update_debounce_ms")
-    if type(debounce_ms) ~= "number" then
-      debounce_ms = 1000  -- default to 1000ms if not a number
-    end
-    
+  if update_timer then
+    update_timer:stop()
+  else
     update_timer = vim.loop.new_timer()
-    update_timer:start(debounce_ms, 0, vim.schedule_wrap(function()
-      local new_context = BufferManager.get_context_buffers()
-      if not vim.deep_equal(BufferManager.get_aider_context(), new_context) then
-        BufferManager.update_context()
-        CommandExecutor.update_aider_context()
-      end
-      if update_timer and not update_timer:is_closing() then
-        update_timer:stop()
-        update_timer:close()
-      end
-      update_timer = nil
-    end))
-  end)
-
-  if not success then
-    Logger.error("Error in debounce_update: " .. tostring(error_msg))
   end
+  
+  local debounce_ms = config.get("update_debounce_ms") or 1000
+  
+  update_timer:start(debounce_ms, 0, vim.schedule_wrap(function()
+    local new_context = BufferManager.get_context_buffers()
+    if not vim.deep_equal(BufferManager.get_aider_context(), new_context) then
+      BufferManager.update_context()
+      CommandExecutor.update_aider_context()
+    end
+    update_timer:stop()
+  end))
 end
 
 function Aider.on_aider_buffer_enter()

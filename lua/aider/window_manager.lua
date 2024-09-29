@@ -17,67 +17,41 @@ function WindowManager.show_window(buf, layout)
 end
 
 function WindowManager.create_window(buf, layout)
-	if layout == "float" then
-		WindowManager.create_float_window(buf)
-	elseif layout == "vsplit" then
-		WindowManager.create_split_window(buf, "vertical")
-	elseif layout == "hsplit" then
-		WindowManager.create_split_window(buf, "horizontal")
-	else
-		error("Invalid layout: " .. layout)
-	end
-end
+    local width = vim.o.columns
+    local height = vim.o.lines
+    
+    local opts = {
+        style = "minimal",
+        relative = "editor",
+        border = "rounded",
+    }
+    
+    if layout == "float" then
+        opts.width = math.ceil(width * 0.8)
+        opts.height = math.ceil(height * 0.8 - 4)
+        opts.row = math.ceil((height - opts.height) / 2 - 1)
+        opts.col = math.ceil((width - opts.width) / 2)
+    elseif layout == "vsplit" then
+        opts.width = math.ceil(width / 2)
+        opts.height = height
+        opts.row = 0
+        opts.col = math.ceil(width / 2)
+    elseif layout == "hsplit" then
+        opts.width = width
+        opts.height = math.ceil(height / 2)
+        opts.row = math.ceil(height / 2)
+        opts.col = 0
+    else
+        error("Invalid layout: " .. layout)
+    end
 
-function WindowManager.create_float_window(buf)
-	Logger.debug("Creating floating window for buffer: " .. tostring(buf))
-	if not buf or not vim.api.nvim_buf_is_valid(buf) then
-		Logger.error("Invalid buffer handle: " .. tostring(buf))
-		vim.notify("Invalid buffer handle", vim.log.levels.ERROR)
-		return
-	end
-
-	local width = vim.o.columns
-	local height = vim.o.lines
-	local win_height = math.ceil(height * 0.8 - 4)
-	local win_width = math.ceil(width * 0.8)
-	local row = math.ceil((height - win_height) / 2 - 1)
-	local col = math.ceil((width - win_width) / 2)
-
-	local opts = {
-		style = "minimal",
-		relative = "editor",
-		width = win_width,
-		height = win_height,
-		row = row,
-		col = col,
-		border = "rounded",
-	}
-
-	Logger.debug("Window options: " .. vim.inspect(opts))
-
-	aider_win = vim.api.nvim_open_win(buf, true, opts)
-	if not aider_win then
-		Logger.error("Failed to create Aider window")
-		vim.notify("Failed to create Aider window", vim.log.levels.ERROR)
-	else
-		Logger.debug("Aider window created successfully: " .. tostring(aider_win))
-	end
-end
-
-function WindowManager.create_split_window(buf, direction)
-	local width = vim.api.nvim_get_option_value("columns", {})
-	local height = vim.api.nvim_get_option_value("lines", {})
-
-	local opts = {
-		style = "minimal",
-		relative = "editor",
-		width = direction == "vertical" and math.ceil(width / 2) or width,
-		height = direction == "horizontal" and math.ceil(height / 2) or height,
-		row = direction == "horizontal" and 0 or 0,
-		col = direction == "vertical" and math.ceil(width / 2) or 0,
-	}
-
-	aider_win = vim.api.nvim_open_win(buf, true, opts)
+    aider_win = vim.api.nvim_open_win(buf, true, opts)
+    if not aider_win then
+        Logger.error("Failed to create Aider window")
+        vim.notify("Failed to create Aider window", vim.log.levels.ERROR)
+    else
+        Logger.debug("Aider window created successfully: " .. tostring(aider_win))
+    end
 end
 
 function WindowManager.hide_aider_window()
