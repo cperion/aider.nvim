@@ -95,11 +95,8 @@ end
 
 function Aider.debounce_update()
   if update_timer then
-    if type(update_timer) == "table" and update_timer.stop then
-      update_timer:stop()
-    elseif type(update_timer) == "number" then
-      vim.loop.timer_stop(update_timer)
-    end
+    update_timer:stop()
+    update_timer:close()
   end
   
   local debounce_ms = config.get("update_debounce_ms")
@@ -107,13 +104,16 @@ function Aider.debounce_update()
     debounce_ms = 1000  -- default to 1000ms if not a number
   end
   
-  update_timer = vim.defer_fn(function()
+  update_timer = vim.loop.new_timer()
+  update_timer:start(debounce_ms, 0, vim.schedule_wrap(function()
     local new_context = BufferManager.get_context_buffers()
     if not vim.deep_equal(BufferManager.get_aider_context(), new_context) then
       BufferManager.update_context()
       CommandExecutor.update_aider_context()
     end
-  end, debounce_ms)
+    update_timer:stop()
+    update_timer:close()
+  end))
 end
 
 function Aider.on_aider_buffer_enter()
