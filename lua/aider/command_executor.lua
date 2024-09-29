@@ -23,9 +23,9 @@ function CommandExecutor.start_aider(buf, args)
     local context_buffers = BufferManager.get_aider_context()
     local command = "aider " .. args .. " " .. table.concat(context_buffers, " ")
 
-    Logger.info("CommandExecutor.start_aider: Starting Aider [CorrelationID: " .. correlation_id .. "]")
-    Logger.debug("CommandExecutor.start_aider: Command: " .. command)
-    Logger.debug("CommandExecutor.start_aider: Context buffers: " .. vim.inspect(context_buffers))
+    Logger.info("Starting Aider", correlation_id)
+    Logger.debug("Command: " .. command, correlation_id)
+    Logger.debug("Context buffers: " .. vim.inspect(context_buffers), correlation_id)
     aider_buf = buf
 
     -- Ensure the buffer is modifiable
@@ -40,7 +40,7 @@ function CommandExecutor.start_aider(buf, args)
     -- Create a terminal in the buffer
     aider_job_id = vim.api.nvim_open_term(buf, {
         on_exit = function(_, exit_code, _)
-            Logger.debug("CommandExecutor.start_aider: Aider job exited with code: " .. tostring(exit_code) .. " [CorrelationID: " .. correlation_id .. "]")
+            Logger.debug("Aider job exited with code: " .. tostring(exit_code), correlation_id)
             CommandExecutor.on_aider_exit(exit_code)
         end,
     })
@@ -58,7 +58,7 @@ function CommandExecutor.start_aider(buf, args)
     vim.schedule(function()
         vim.cmd("startinsert")
     end)
-    Logger.info("CommandExecutor.start_aider: Aider started successfully [CorrelationID: " .. correlation_id .. "]")
+    Logger.info("Aider started successfully", correlation_id)
 end
 
 function CommandExecutor.update_aider_context()
@@ -67,17 +67,17 @@ function CommandExecutor.update_aider_context()
         local new_context = BufferManager.get_aider_context()
         local commands = ContextManager.get_batched_commands()
 
-        Logger.info("CommandExecutor.update_aider_context: Updating Aider context [CorrelationID: " .. correlation_id .. "]")
-        Logger.debug("CommandExecutor.update_aider_context: New context: " .. vim.inspect(new_context))
-        Logger.debug("CommandExecutor.update_aider_context: Generated commands: " .. vim.inspect(commands))
+        Logger.info("Updating Aider context", correlation_id)
+        Logger.debug("New context: " .. vim.inspect(new_context), correlation_id)
+        Logger.debug("Generated commands: " .. vim.inspect(commands), correlation_id)
 
         if #commands > 0 then
             CommandExecutor.execute_commands(commands)
         else
-            Logger.debug("CommandExecutor.update_aider_context: No commands to execute [CorrelationID: " .. correlation_id .. "]")
+            Logger.debug("No commands to execute", correlation_id)
         end
     else
-        Logger.warn("CommandExecutor.update_aider_context: Aider job is not running, context update skipped [CorrelationID: " .. correlation_id .. "]")
+        Logger.warn("Aider job is not running, context update skipped", correlation_id)
     end
 end
 

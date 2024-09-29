@@ -75,9 +75,12 @@ function Logger.set_log_level(level)
     end
 end
 
-local function log(level, message)
+local function log(level, message, correlation_id)
     if log_levels[level] >= current_log_level then
         local log_message = string.format("[%s] %s: %s", os.date("%Y-%m-%d %H:%M:%S"), level, message)
+        if correlation_id then
+            log_message = log_message .. " [CorrelationID: " .. correlation_id .. "]"
+        end
         print(log_message)
         if log_file then
             local file = io.open(log_file, "a")
@@ -89,20 +92,20 @@ local function log(level, message)
     end
 end
 
-function Logger.debug(message)
-    log("DEBUG", message)
+function Logger.debug(message, correlation_id)
+    log("DEBUG", message, correlation_id)
 end
 
-function Logger.info(message)
-    log("INFO", message)
+function Logger.info(message, correlation_id)
+    log("INFO", message, correlation_id)
 end
 
-function Logger.warn(message)
-    log("WARN", message)
+function Logger.warn(message, correlation_id)
+    log("WARN", message, correlation_id)
 end
 
-function Logger.error(message)
-    log("ERROR", message)
+function Logger.error(message, correlation_id)
+    log("ERROR", message, correlation_id)
 end
 
 function Logger.generate_correlation_id()

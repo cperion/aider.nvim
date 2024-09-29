@@ -24,22 +24,21 @@ end
 
 function Aider.open(args, layout)
     local correlation_id = Logger.generate_correlation_id()
-    Logger.debug("Aider.open: Opening Aider window [CorrelationID: " .. correlation_id .. "]")
-    Logger.debug("Aider.open: Args: " .. vim.inspect(args) .. ", Layout: " .. tostring(layout))
+    Logger.debug("Opening Aider window", correlation_id)
+    Logger.debug("Args: " .. vim.inspect(args) .. ", Layout: " .. tostring(layout), correlation_id)
     local buf = BufferManager.get_aider_buffer()
     WindowManager.show_window(buf, layout or config.get("default_layout"))
 
     if vim.api.nvim_buf_line_count(buf) == 1 and vim.api.nvim_buf_get_lines(buf, 0, -1, false)[1] == "" then
         CommandExecutor.start_aider(buf, args)
     end
-    Logger.debug("Aider.open: Aider window opened [CorrelationID: " .. correlation_id .. "]")
+    Logger.debug("Aider window opened", correlation_id)
 end
 
 function Aider.toggle()
     local correlation_id = Logger.generate_correlation_id()
     local is_open = WindowManager.is_window_open()
-    Logger.debug("Aider.toggle: Toggling Aider window [CorrelationID: " .. correlation_id .. "]")
-    Logger.debug("Aider.toggle: Current state: " .. (is_open and "open" or "closed"))
+    Logger.debug("Toggling Aider window. Current state: " .. (is_open and "open" or "closed"), correlation_id)
     if is_open then
         WindowManager.hide_aider_window()
     else
@@ -48,11 +47,11 @@ function Aider.toggle()
         if default_layout then
             WindowManager.show_window(buf, default_layout)
         else
-            Logger.warn("Aider.toggle: Default layout is not configured. Using 'float' as fallback.")
+            Logger.warn("Default layout is not configured. Using 'float' as fallback.", correlation_id)
             WindowManager.show_window(buf, "float")
         end
     end
-    Logger.debug("Aider.toggle: New state: " .. (WindowManager.is_window_open() and "open" or "closed") .. " [CorrelationID: " .. correlation_id .. "]")
+    Logger.debug("New state: " .. (WindowManager.is_window_open() and "open" or "closed"), correlation_id)
 end
 
 function Aider.cleanup()
