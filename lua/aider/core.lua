@@ -27,7 +27,19 @@ function Aider.open(args, layout)
 	local buf = BufferManager.get_aider_buffer()
 	WindowManager.show_window(buf, layout or config.get("default_layout"))
 
-	if vim.api.nvim_buf_line_count(buf) == 1 and vim.api.nvim_buf_get_lines(buf, 0, -1, false)[1] == "" then
+	-- Check if the buffer is empty
+	local is_buffer_empty = function(buffer)
+		local line_count = vim.api.nvim_buf_line_count(buffer)
+		if line_count == 0 then
+			return true
+		elseif line_count == 1 then
+			local first_line = vim.api.nvim_buf_get_lines(buffer, 0, 1, false)[1]
+			return first_line == "" or first_line == nil
+		end
+		return false
+	end
+
+	if is_buffer_empty(buf) then
 		CommandExecutor.start_aider(buf, args)
 	end
 	Logger.debug("Aider window opened", correlation_id)
