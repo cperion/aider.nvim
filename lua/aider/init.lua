@@ -1,5 +1,5 @@
-local Aider = require("aider.core")
-local config = require("aider.config")
+local Aider = require("core")
+local config = require("config")
 
 local M = {}
 
