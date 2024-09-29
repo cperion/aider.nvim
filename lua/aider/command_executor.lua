@@ -85,12 +85,18 @@ function CommandExecutor.execute_commands(commands, callback)
     end
 
     local command = table.remove(commands, 1)
-    vim.api.nvim_chan_send(aider_job_id, command .. "\n")
+    
+    if aider_job_id then
+        vim.api.nvim_chan_send(aider_job_id, command .. "\n")
 
-    -- Wait for command to complete (adjust timeout as needed)
-    vim.defer_fn(function()
-        CommandExecutor.execute_commands(commands, callback)
-    end, 500) -- 500ms delay between commands
+        -- Wait for command to complete (adjust timeout as needed)
+        vim.defer_fn(function()
+            CommandExecutor.execute_commands(commands, callback)
+        end, 500) -- 500ms delay between commands
+    else
+        vim.notify("Aider job is not running", vim.log.levels.WARN)
+        callback()
+    end
 end
 
 function CommandExecutor.on_aider_exit(exit_code)
