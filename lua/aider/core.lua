@@ -52,11 +52,14 @@ function Aider.debounce_update()
 end
 
 function Aider.setup_keybindings()
-	local keymap = vim.api.nvim_set_keymap
-	local opts = { noremap = true, silent = true }
+    local keymap = vim.api.nvim_set_keymap
+    local opts = { noremap = true, silent = true }
 
-	keymap("n", config.get("keys.open"), ':lua require("aider.core").open()<CR>', opts)
-	keymap("n", config.get("keys.toggle"), ':lua require("aider.core").toggle()<CR>', opts)
+    local open_key = config.get("keys.open") or "<leader> "
+    local toggle_key = config.get("keys.toggle") or "<leader>at"
+
+    keymap("n", open_key, ':lua require("aider.core").open()<CR>', opts)
+    keymap("n", toggle_key, ':lua require("aider.core").toggle()<CR>', opts)
 end
 
 return Aider
