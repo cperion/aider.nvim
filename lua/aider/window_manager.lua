@@ -58,8 +58,8 @@ function WindowManager.create_split_window(buf, direction)
         relative = "editor",
         width = direction == "vertical" and math.ceil(width / 2) or width,
         height = direction == "horizontal" and math.ceil(height / 2) or height,
-        row = direction == "horizontal" and 0 or nil,
-        col = direction == "vertical" and math.ceil(width / 2) or nil,
+        row = direction == "horizontal" and 0 or 0,
+        col = direction == "vertical" and math.ceil(width / 2) or 0,
     }
 
     aider_win = vim.api.nvim_open_win(buf, true, opts)
