@@ -39,32 +39,36 @@ function WindowManager.create_float_window(buf)
 end
 
 function WindowManager.create_split_window(buf, direction)
-	if direction == "vertical" then
-		aider_win = vim.api.nvim_open_win(buf, true, {
-			relative = 'editor',
-			width = math.floor(vim.o.columns / 2),
-			height = vim.o.lines,
-			row = 0,
-			col = 0,
-			style = 'minimal',
-		})
-	else
-		aider_win = vim.api.nvim_open_win(buf, true, {
-			relative = 'editor',
-			width = vim.o.columns,
-			height = math.floor(vim.o.lines / 2),
-			row = 0,
-			col = 0,
-			style = 'minimal',
-		})
-	end
+    local width = vim.o.columns
+    local height = vim.o.lines
+    local opts = {
+        relative = 'editor',
+        style = 'minimal',
+        focusable = true,
+        border = 'none',
+    }
+
+    if direction == "vertical" then
+        opts.width = math.floor(width / 2)
+        opts.height = height
+        opts.row = 0
+        opts.col = 0
+    else -- horizontal split
+        opts.width = width
+        opts.height = math.floor(height / 2)
+        opts.row = 0
+        opts.col = 0
+    end
+
+    aider_win = vim.api.nvim_open_win(buf, true, opts)
+    vim.api.nvim_win_set_option(aider_win, "winblend", 0)
 end
 
 function WindowManager.hide_aider_window()
-	if aider_win and vim.api.nvim_win_is_valid(aider_win) then
-		vim.api.nvim_win_close(aider_win, true)
-		aider_win = nil
-	end
+    if aider_win and vim.api.nvim_win_is_valid(aider_win) then
+        vim.api.nvim_win_close(aider_win, true)
+        aider_win = nil
+    end
 end
 
 function WindowManager.is_aider_window_open()

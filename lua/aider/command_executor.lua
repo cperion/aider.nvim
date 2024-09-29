@@ -40,8 +40,11 @@ function CommandExecutor.start_aider(buf, args)
     })
 
     -- Set terminal-specific options
-    vim.bo[buf].buftype = "terminal"
-    vim.bo[buf].modifiable = false
+    vim.api.nvim_buf_set_option(buf, 'buftype', 'terminal')
+    vim.api.nvim_buf_set_option(buf, 'modifiable', false)
+    vim.api.nvim_buf_set_option(buf, 'buflisted', false)
+    vim.api.nvim_buf_set_option(buf, 'swapfile', false)
+    vim.api.nvim_buf_set_name(buf, "Aider")
 
     -- Initialize the context
     ContextManager.update(context_buffers)
