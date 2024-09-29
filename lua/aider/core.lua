@@ -80,8 +80,10 @@ end
 function Aider.debounce_update()
   if update_timer then
     update_timer:stop()
-  else
-    update_timer = vim.loop.new_timer()
+  end
+
+  if not update_timer then
+    update_timer = vim.uv.new_timer()
   end
   
   local debounce_ms = config.get("update_debounce_ms") or 1000
