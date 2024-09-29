@@ -15,7 +15,7 @@ function Aider.setup()
     WindowManager.setup()
     BufferManager.setup()
     CommandExecutor.setup()
-    ContextManager.setup()
+    -- Removed ContextManager.setup() call as it doesn't exist
 
     Aider.setup_autocommands()
     Aider.setup_keybindings()
@@ -56,7 +56,7 @@ end
 
 function Aider.cleanup()
     Logger.info("Cleaning up Aider")
-    WindowManager.hide_window()
+    WindowManager.hide_aider_window()
     CommandExecutor.stop_aider()
     Logger.cleanup()
     -- Clear any other resources or state
@@ -68,7 +68,7 @@ function Aider.setup_autocommands()
 
     vim.api.nvim_create_autocmd({ "BufEnter", "BufLeave", "BufWritePost" }, {
         group = aider_group,
-        pattern = "*",  -- Change this to match all buffers
+        pattern = "*",
         callback = function()
             require('aider.core').debounce_update()
         end,
