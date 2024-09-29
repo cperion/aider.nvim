@@ -1,24 +1,30 @@
 local WindowManager = {}
 local aider_win = nil
+local current_layout = nil
 
 function WindowManager.setup()
     -- Any setup needed for window management
 end
 
-function WindowManager.show_aider_window(buf, layout)
+function WindowManager.show_window(buf, layout)
     if aider_win and vim.api.nvim_win_is_valid(aider_win) then
         vim.api.nvim_set_current_win(aider_win)
         vim.api.nvim_win_set_buf(aider_win, buf)
     else
-        if layout == "float" then
-            WindowManager.create_float_window(buf)
-        elseif layout == "vsplit" then
-            WindowManager.create_split_window(buf, "vertical")
-        elseif layout == "hsplit" then
-            WindowManager.create_split_window(buf, "horizontal")
-        else
-            error("Invalid layout: " .. layout)
-        end
+        WindowManager.create_window(buf, layout)
+    end
+    current_layout = layout
+end
+
+function WindowManager.create_window(buf, layout)
+    if layout == "float" then
+        WindowManager.create_float_window(buf)
+    elseif layout == "vsplit" then
+        WindowManager.create_split_window(buf, "vertical")
+    elseif layout == "hsplit" then
+        WindowManager.create_split_window(buf, "horizontal")
+    else
+        error("Invalid layout: " .. layout)
     end
 end
 
