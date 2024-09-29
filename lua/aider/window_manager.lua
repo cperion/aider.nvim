@@ -35,13 +35,29 @@ function WindowManager.create_float_window(buf)
 	}
 
 	aider_win = vim.api.nvim_open_win(buf, true, opts)
-	vim.api.nvim_win_set_var(aider_win, "winblend", 0)
+	vim.api.nvim_win_set_option(aider_win, "winblend", 0)
 end
 
 function WindowManager.create_split_window(buf, direction)
-	vim.cmd(direction == "vertical" and "vsplit" or "split")
-	aider_win = vim.api.nvim_get_current_win()
-	vim.api.nvim_win_set_buf(aider_win, buf)
+	if direction == "vertical" then
+		aider_win = vim.api.nvim_open_win(buf, true, {
+			relative = 'editor',
+			width = math.floor(vim.o.columns / 2),
+			height = vim.o.lines,
+			row = 0,
+			col = 0,
+			style = 'minimal',
+		})
+	else
+		aider_win = vim.api.nvim_open_win(buf, true, {
+			relative = 'editor',
+			width = vim.o.columns,
+			height = math.floor(vim.o.lines / 2),
+			row = 0,
+			col = 0,
+			style = 'minimal',
+		})
+	end
 end
 
 function WindowManager.hide_aider_window()

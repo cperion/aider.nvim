@@ -33,23 +33,35 @@ function Aider.toggle(layout)
 end
 
 function Aider.setup_autocommands()
-    vim.cmd([[
-    augroup AiderSync
-      autocmd!
-      autocmd BufEnter,BufLeave,BufWritePost * lua require('aider.core').debounce_update()
-      autocmd BufEnter Aider lua require('aider.core').on_aider_buffer_enter()
-    augroup END
-  ]])
+    local aider_group = vim.api.nvim_create_augroup("AiderSync", { clear = true })
+
+    vim.api.nvim_create_autocmd({ "BufEnter", "BufLeave", "BufWritePost" }, {
+        group = aider_group,
+        callback = function()
+            require('aider.core').debounce_update()
+        end,
+    })
+
+    vim.api.nvim_create_autocmd("BufEnter", {
+        group = aider_group,
+        pattern = "Aider",
+        callback = function()
+            require('aider.core').on_aider_buffer_enter()
+        end,
+    })
 end
 
 function Aider.debounce_update()
     if update_timer then
-        vim.fn.timer_stop(update_timer)
+        update_timer:stop()
+    else
+        update_timer = vim.loop.new_timer()
     end
-    update_timer = vim.fn.timer_start(1000, function()
+
+    update_timer:start(1000, 0, vim.schedule_wrap(function()
         BufferManager.update_context()
         CommandExecutor.update_aider_context()
-    end)
+    end))
 end
 
 function Aider.on_aider_buffer_enter()
@@ -58,14 +70,16 @@ function Aider.on_aider_buffer_enter()
 end
 
 function Aider.setup_keybindings()
-    local keymap = vim.api.nvim_set_keymap
-    local opts = { noremap = true, silent = true }
-
     local open_key = config.get("keys.open") or "<leader> "
     local toggle_key = config.get("keys.toggle") or "<leader>at"
 
-    keymap("n", open_key, ':lua require("aider.core").open()<CR>', opts)
-    keymap("n", toggle_key, ':lua require("aider.core").toggle()<CR>', opts)
+    vim.keymap.set("n", open_key, function()
+        require("aider.core").open()
+    end, { silent = true })
+
+    vim.keymap.set("n", toggle_key, function()
+        require("aider.core").toggle()
+    end, { silent = true })
 end
 
 return Aider

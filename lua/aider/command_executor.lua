@@ -46,9 +46,9 @@ function CommandExecutor.start_aider(buf, args)
     -- Initialize the context
     ContextManager.update(context_buffers)
 
-    vim.defer_fn(function()
+    vim.schedule(function()
         vim.cmd("startinsert")
-    end, 100)
+    end)
 end
 
 function CommandExecutor.update_aider_context()
