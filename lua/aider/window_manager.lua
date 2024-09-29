@@ -1,5 +1,3 @@
-local config = require("aider.config")
-
 local WindowManager = {}
 
 local aider_win = nil
@@ -37,7 +35,7 @@ function WindowManager.create_float_window(buf)
 	}
 
 	aider_win = vim.api.nvim_open_win(buf, true, opts)
-	vim.api.nvim_win_set_option(aider_win, "winblend", 0)
+	vim.api.nvim_win_set_var(aider_win, "winblend", 0)
 end
 
 function WindowManager.create_split_window(buf, direction)

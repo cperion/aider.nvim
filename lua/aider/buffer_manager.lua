@@ -17,9 +17,9 @@ function BufferManager.get_or_create_aider_buffer()
 		vim.api.nvim_buf_set_name(aider_buf, "Aider")
 
 		-- Set buffer options
-		vim.api.nvim_buf_set_option(aider_buf, "bufhidden", "hide")
-		vim.api.nvim_buf_set_option(aider_buf, "swapfile", false)
-		vim.api.nvim_buf_set_option(aider_buf, "buflisted", false)
+		vim.bo[aider_buf].bufhidden = "hide"
+		vim.bo[aider_buf].swapfile = false
+		vim.bo[aider_buf].buflisted = false
 	end
 
 	return aider_buf
@@ -29,7 +29,7 @@ function BufferManager.get_context_buffers()
 	local context_buffers = {}
 	for _, buf in ipairs(vim.api.nvim_list_bufs()) do
 		local bufname = vim.api.nvim_buf_get_name(buf)
-		local buftype = vim.api.nvim_buf_get_option(buf, "buftype")
+		local buftype = vim.bo[buf].buftype
 		if BufferManager.should_include_in_context(bufname, buftype) then
 			table.insert(context_buffers, bufname)
 		end
