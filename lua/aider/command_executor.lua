@@ -42,24 +42,24 @@ function CommandExecutor.start_aider(buf, args)
 end
 
 function CommandExecutor.update_aider_context()
-    if aider_job_id then
-        local new_context = BufferManager.get_aider_context()
-        ContextManager.update(new_context)
-        local commands = ContextManager.get_batched_commands()
-        
-        if #commands > 0 then
-            CommandExecutor.execute_commands(commands)
-        end
-    end
+	if aider_job_id then
+		local new_context = BufferManager.get_aider_context()
+		ContextManager.update(new_context)
+		local commands = ContextManager.get_batched_commands()
+
+		if #commands > 0 then
+			CommandExecutor.execute_commands(commands)
+		end
+	end
 end
 
 function CommandExecutor.execute_commands(commands)
-    if aider_job_id then
-        local command_string = table.concat(commands, "\n") .. "\n"
-        vim.api.nvim_chan_send(aider_job_id, command_string)
-    else
-        vim.notify("Aider job is not running", vim.log.levels.WARN)
-    end
+	if aider_job_id then
+		local command_string = table.concat(commands, "\n") .. "\n"
+		vim.api.nvim_chan_send(aider_job_id, command_string)
+	else
+		vim.notify("Aider job is not running", vim.log.levels.WARN)
+	end
 end
 
 function CommandExecutor.on_aider_exit(exit_code)
