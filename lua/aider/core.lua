@@ -102,13 +102,18 @@ function Aider.debounce_update()
     end
   end
   
+  local debounce_ms = config.get("update_debounce_ms")
+  if type(debounce_ms) ~= "number" then
+    debounce_ms = 1000  -- default to 1000ms if not a number
+  end
+  
   update_timer = vim.defer_fn(function()
     local new_context = BufferManager.get_context_buffers()
     if not vim.deep_equal(BufferManager.get_aider_context(), new_context) then
       BufferManager.update_context()
       CommandExecutor.update_aider_context()
     end
-  end, config.get("update_debounce_ms") or 1000)
+  end, debounce_ms)
 end
 
 function Aider.on_aider_buffer_enter()
