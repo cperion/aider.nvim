@@ -6,6 +6,7 @@ local Logger = require("aider.logger")
 
 local Aider = {}
 local update_timer = nil
+local current_layout = "float"
 
 function Aider.setup()
 	Logger.setup()
@@ -25,7 +26,10 @@ function Aider.open(args, layout)
 	Logger.debug("Opening Aider window", correlation_id)
 	Logger.debug("Args: " .. vim.inspect(args) .. ", Layout: " .. tostring(layout), correlation_id)
 	local buf = BufferManager.get_aider_buffer()
-	WindowManager.show_window(buf, layout or config.get("default_layout"))
+	
+	-- Use the provided layout, current_layout, or default_layout
+	local used_layout = layout or current_layout or config.get("default_layout")
+	WindowManager.show_window(buf, used_layout)
 
 	-- Check if the buffer is empty
 	local is_buffer_empty = function(buffer)
@@ -49,19 +53,25 @@ function Aider.toggle()
 	local correlation_id = Logger.generate_correlation_id()
 	local is_open = WindowManager.is_window_open()
 	Logger.debug("Toggling Aider window. Current state: " .. (is_open and "open" or "closed"), correlation_id)
+	
 	if is_open then
 		WindowManager.hide_aider_window()
 	else
 		local buf = BufferManager.get_aider_buffer()
-		local default_layout = config.get("default_layout")
-		if default_layout then
-			WindowManager.show_window(buf, default_layout)
+		
+		-- Cycle through layouts
+		if current_layout == "float" then
+			current_layout = "vsplit"
+		elseif current_layout == "vsplit" then
+			current_layout = "hsplit"
 		else
-			Logger.warn("Default layout is not configured. Using 'float' as fallback.", correlation_id)
-			WindowManager.show_window(buf, "float")
+			current_layout = "float"
 		end
+		
+		WindowManager.show_window(buf, current_layout)
 	end
-	Logger.debug("New state: " .. (WindowManager.is_window_open() and "open" or "closed"), correlation_id)
+	
+	Logger.debug("New state: " .. (WindowManager.is_window_open() and "open" or "closed") .. ", Layout: " .. current_layout, correlation_id)
 end
 
 function Aider.cleanup()
