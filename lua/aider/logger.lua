@@ -49,3 +49,64 @@ function Logger.cleanup()
 end
 
 return Logger
+local Logger = {}
+
+local log_levels = {
+    DEBUG = 1,
+    INFO = 2,
+    WARN = 3,
+    ERROR = 4,
+}
+
+local current_log_level = log_levels.INFO
+local log_file = nil
+
+function Logger.setup(opts)
+    opts = opts or {}
+    current_log_level = opts.log_level or log_levels.INFO
+    log_file = opts.log_file
+end
+
+function Logger.set_log_level(level)
+    if log_levels[level] then
+        current_log_level = log_levels[level]
+    else
+        error("Invalid log level: " .. tostring(level))
+    end
+end
+
+local function log(level, message)
+    if log_levels[level] >= current_log_level then
+        local log_message = string.format("[%s] %s: %s", os.date("%Y-%m-%d %H:%M:%S"), level, message)
+        print(log_message)
+        if log_file then
+            local file = io.open(log_file, "a")
+            if file then
+                file:write(log_message .. "\n")
+                file:close()
+            end
+        end
+    end
+end
+
+function Logger.debug(message)
+    log("DEBUG", message)
+end
+
+function Logger.info(message)
+    log("INFO", message)
+end
+
+function Logger.warn(message)
+    log("WARN", message)
+end
+
+function Logger.error(message)
+    log("ERROR", message)
+end
+
+function Logger.generate_correlation_id()
+    return string.format("%08x", math.random(0, 0xffffffff))
+end
+
+return Logger

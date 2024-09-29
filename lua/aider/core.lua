@@ -10,8 +10,8 @@ local update_timer = nil
 
 function Aider.setup()
     Logger.setup()
-    Logger.debug("Setting up Aider")
-    Logger.debug("User config: " .. vim.inspect(config.get_all()))
+    Logger.debug("Aider.setup: Starting Aider setup")
+    Logger.debug("Aider.setup: User config: " .. vim.inspect(config.get_all()))
     WindowManager.setup()
     BufferManager.setup()
     CommandExecutor.setup()
@@ -19,23 +19,27 @@ function Aider.setup()
 
     Aider.setup_autocommands()
     Aider.setup_keybindings()
-    Logger.debug("Aider setup complete")
+    Logger.debug("Aider.setup: Aider setup complete")
 end
 
 function Aider.open(args, layout)
-    Logger.debug("Opening Aider window with args: " .. vim.inspect(args) .. ", layout: " .. tostring(layout))
+    local correlation_id = Logger.generate_correlation_id()
+    Logger.debug("Aider.open: Opening Aider window [CorrelationID: " .. correlation_id .. "]")
+    Logger.debug("Aider.open: Args: " .. vim.inspect(args) .. ", Layout: " .. tostring(layout))
     local buf = BufferManager.get_aider_buffer()
     WindowManager.show_window(buf, layout or config.get("default_layout"))
 
     if vim.api.nvim_buf_line_count(buf) == 1 and vim.api.nvim_buf_get_lines(buf, 0, -1, false)[1] == "" then
         CommandExecutor.start_aider(buf, args)
     end
-    Logger.debug("Aider window opened")
+    Logger.debug("Aider.open: Aider window opened [CorrelationID: " .. correlation_id .. "]")
 end
 
 function Aider.toggle()
+    local correlation_id = Logger.generate_correlation_id()
     local is_open = WindowManager.is_window_open()
-    Logger.debug("Toggling Aider window, current state: " .. (is_open and "open" or "closed"))
+    Logger.debug("Aider.toggle: Toggling Aider window [CorrelationID: " .. correlation_id .. "]")
+    Logger.debug("Aider.toggle: Current state: " .. (is_open and "open" or "closed"))
     if is_open then
         WindowManager.hide_aider_window()
     else
@@ -44,11 +48,11 @@ function Aider.toggle()
         if default_layout then
             WindowManager.show_window(buf, default_layout)
         else
-            Logger.warn("Default layout is not configured. Using 'float' as fallback.")
+            Logger.warn("Aider.toggle: Default layout is not configured. Using 'float' as fallback.")
             WindowManager.show_window(buf, "float")
         end
     end
-    Logger.debug("Aider window toggled, new state: " .. (WindowManager.is_window_open() and "open" or "closed"))
+    Logger.debug("Aider.toggle: New state: " .. (WindowManager.is_window_open() and "open" or "closed") .. " [CorrelationID: " .. correlation_id .. "]")
 end
 
 function Aider.cleanup()

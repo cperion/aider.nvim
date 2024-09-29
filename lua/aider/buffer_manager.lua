@@ -48,16 +48,21 @@ function BufferManager.should_include_in_context(buf)
 end
 
 function BufferManager.update_context()
+    local correlation_id = Logger.generate_correlation_id()
+    Logger.debug("BufferManager.update_context: Updating context [CorrelationID: " .. correlation_id .. "]")
+    local start_time = vim.loop.hrtime()
     local new_context = BufferManager.get_context_buffers()
-    Logger.debug("Current context: " .. vim.inspect(aider_context))
-    Logger.debug("New context: " .. vim.inspect(new_context))
+    Logger.debug("BufferManager.update_context: Current context: " .. vim.inspect(aider_context))
+    Logger.debug("BufferManager.update_context: New context: " .. vim.inspect(new_context))
     if not vim.deep_equal(aider_context, new_context) then
-        Logger.debug("Context changed, updating Aider")
+        Logger.info("BufferManager.update_context: Context changed, updating Aider [CorrelationID: " .. correlation_id .. "]")
         aider_context = new_context
         require("aider.command_executor").update_aider_context()
     else
-        Logger.debug("Context unchanged, no update needed")
+        Logger.debug("BufferManager.update_context: Context unchanged, no update needed [CorrelationID: " .. correlation_id .. "]")
     end
+    local end_time = vim.loop.hrtime()
+    Logger.debug(string.format("BufferManager.update_context: Operation took %.3f ms [CorrelationID: %s]", (end_time - start_time) / 1e6, correlation_id))
 end
 
 function BufferManager.get_aider_context()
