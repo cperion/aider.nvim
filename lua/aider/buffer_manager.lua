@@ -30,32 +30,25 @@ function BufferManager.is_aider_buffer(buf)
 end
 
 function BufferManager.get_context_buffers()
-	local context_buffers = {}
-	for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-		if vim.api.nvim_buf_is_loaded(buf) and vim.api.nvim_buf_get_option(buf, "buflisted") then
-			local bufname = vim.api.nvim_buf_get_name(buf)
-			if BufferManager.should_include_in_context(bufname, vim.api.nvim_buf_get_option(buf, "buftype")) then
-				table.insert(context_buffers, bufname)
-			end
-		end
-	end
-	return context_buffers
+    local current_buf = vim.api.nvim_get_current_buf()
+    if BufferManager.should_include_in_context(current_buf) then
+        return { vim.api.nvim_buf_get_name(current_buf) }
+    end
+    return {}
 end
 
-function BufferManager.should_include_in_context(bufname, buftype)
-	return bufname ~= ""
-		and not bufname:match("^term://")
-		and buftype ~= "terminal"
-		and bufname ~= "Aider"
-		and vim.api.nvim_buf_get_option(0, "buflisted")
+function BufferManager.should_include_in_context(buf)
+    local bufname = vim.api.nvim_buf_get_name(buf)
+    local buftype = vim.api.nvim_buf_get_option(buf, 'buftype')
+    return bufname ~= "" and not bufname:match("^term://") and buftype ~= "terminal" and bufname ~= "Aider"
 end
 
 function BufferManager.update_context()
-	local new_context = BufferManager.get_context_buffers()
-	if not vim.deep_equal(aider_context, new_context) then
-		aider_context = new_context
-		require("aider.command_executor").update_aider_context()
-	end
+    local new_context = BufferManager.get_context_buffers()
+    if not vim.deep_equal(aider_context, new_context) then
+        aider_context = new_context
+        require("aider.command_executor").update_aider_context()
+    end
 end
 
 function BufferManager.get_aider_context()

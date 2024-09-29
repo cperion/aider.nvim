@@ -29,56 +29,45 @@ function WindowManager.create_window(buf, layout)
 end
 
 function WindowManager.create_float_window(buf)
-    local width = math.floor(vim.o.columns * 0.8)
-    local height = math.floor(vim.o.lines * 0.8)
-    local row = math.floor((vim.o.lines - height) / 2)
-    local col = math.floor((vim.o.columns - width) / 2)
+    local width = vim.api.nvim_get_option('columns')
+    local height = vim.api.nvim_get_option('lines')
+    local win_height = math.ceil(height * 0.8 - 4)
+    local win_width = math.ceil(width * 0.8)
+    local row = math.ceil((height - win_height) / 2 - 1)
+    local col = math.ceil((width - win_width) / 2)
 
     local opts = {
+        style = "minimal",
         relative = "editor",
-        width = width,
-        height = height,
+        width = win_width,
+        height = win_height,
         row = row,
         col = col,
-        style = "minimal",
         border = "rounded",
     }
 
     aider_win = vim.api.nvim_open_win(buf, true, opts)
-    vim.api.nvim_win_set_option(aider_win, "winblend", 0)
 end
 
 function WindowManager.create_split_window(buf, direction)
-    local width = vim.o.columns
-    local height = vim.o.lines
+    local width = vim.api.nvim_get_option('columns')
+    local height = vim.api.nvim_get_option('lines')
+
     local opts = {
-        relative = 'editor',
-        style = 'minimal',
-        focusable = true,
-        border = 'none',
+        style = "minimal",
+        relative = "editor",
+        width = direction == "vertical" and math.ceil(width / 2) or width,
+        height = direction == "horizontal" and math.ceil(height / 2) or height,
+        row = direction == "horizontal" and 0 or nil,
+        col = direction == "vertical" and math.ceil(width / 2) or nil,
     }
 
-    if direction == "vertical" then
-        opts.width = math.floor(width / 2)
-        opts.height = height
-        opts.row = 0
-        opts.col = math.floor(width / 2)
-    else -- horizontal split
-        opts.width = width
-        opts.height = math.floor(height / 2)
-        opts.row = 0
-        opts.col = 0
-    end
-
-    vim.cmd(direction .. ' new')
-    aider_win = vim.api.nvim_get_current_win()
-    vim.api.nvim_win_set_buf(aider_win, buf)
-    vim.api.nvim_win_set_option(aider_win, "winblend", 0)
+    aider_win = vim.api.nvim_open_win(buf, true, opts)
 end
 
 function WindowManager.hide_aider_window()
     if aider_win and vim.api.nvim_win_is_valid(aider_win) then
-        vim.api.nvim_win_hide(aider_win)
+        vim.api.nvim_win_close(aider_win, true)
     end
     aider_win = nil
 end

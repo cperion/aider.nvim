@@ -33,7 +33,7 @@ function CommandExecutor.start_aider(buf, args)
     vim.bo[buf].modified = false
 
     -- Create a terminal in the buffer
-    aider_job_id = vim.fn.termopen(command, {
+    aider_job_id = vim.api.nvim_open_term(buf, {
         on_exit = function(_, exit_code, _)
             CommandExecutor.on_aider_exit(exit_code)
         end,
@@ -67,10 +67,7 @@ end
 
 function CommandExecutor.execute_commands(commands)
     if aider_job_id then
-        -- Clear the input line
         CommandExecutor.clear_input_line()
-        
-        -- Execute the commands
         local command_string = table.concat(commands, "\n") .. "\n"
         vim.api.nvim_chan_send(aider_job_id, command_string)
     else
