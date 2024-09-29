@@ -15,13 +15,13 @@ function CommandExecutor.start_aider(buf, args)
     local command = "aider " .. args .. " " .. table.concat(context_buffers, " ")
 
     -- Ensure the buffer is modifiable
-    vim.api.nvim_buf_set_option(buf, "modifiable", true)
+    vim.bo[buf].modifiable = true
 
     -- Clear the buffer content
     vim.api.nvim_buf_set_lines(buf, 0, -1, false, {})
 
     -- Set the buffer as unmodified
-    vim.api.nvim_buf_set_option(buf, "modified", false)
+    vim.bo[buf].modified = false
 
     -- Create a terminal in the buffer
     aider_job_id = vim.fn.termopen(command, {
@@ -31,8 +31,8 @@ function CommandExecutor.start_aider(buf, args)
     })
 
     -- Set terminal-specific options
-    vim.api.nvim_buf_set_option(buf, "buftype", "terminal")
-    vim.api.nvim_buf_set_option(buf, "modifiable", false)
+    vim.bo[buf].buftype = "terminal"
+    vim.bo[buf].modifiable = false
 
     -- Initialize the current_context
     current_context = vim.deepcopy(context_buffers)
@@ -94,11 +94,15 @@ function CommandExecutor.execute_commands(commands, callback)
 end
 
 function CommandExecutor.on_aider_exit(exit_code)
-	aider_job_id = nil
-	current_context = {}
-	vim.schedule(function()
-		vim.notify("Aider finished with exit code " .. exit_code)
-	end)
+    aider_job_id = nil
+    current_context = {}
+    vim.schedule(function()
+        if exit_code ~= nil then
+            vim.notify("Aider finished with exit code " .. exit_code)
+        else
+            vim.notify("Aider finished")
+        end
+    end)
 end
 
 return CommandExecutor
