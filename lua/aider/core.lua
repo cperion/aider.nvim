@@ -64,13 +64,14 @@ end
 function Aider.debounce_update()
     if update_timer then
         update_timer:stop()
-    else
-        update_timer = vim.loop.new_timer()
     end
-
+    update_timer = vim.loop.new_timer()
     update_timer:start(1000, 0, vim.schedule_wrap(function()
-        BufferManager.update_context()
-        CommandExecutor.update_aider_context()
+        local new_context = BufferManager.get_context_buffers()
+        if not vim.deep_equal(BufferManager.get_aider_context(), new_context) then
+            BufferManager.update_context()
+            CommandExecutor.update_aider_context()
+        end
     end))
 end
 
