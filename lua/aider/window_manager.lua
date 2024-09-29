@@ -36,8 +36,8 @@ function WindowManager.create_float_window(buf)
         return
     end
 
-    local width = vim.api.nvim_get_option('columns')
-    local height = vim.api.nvim_get_option('lines')
+    local width = vim.o.columns
+    local height = vim.o.lines
     local win_height = math.ceil(height * 0.8 - 4)
     local win_width = math.ceil(width * 0.8)
     local row = math.ceil((height - win_height) / 2 - 1)
