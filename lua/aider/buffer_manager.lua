@@ -47,7 +47,11 @@ function BufferManager.should_include_in_context(bufname, buftype)
 end
 
 function BufferManager.update_context()
-	aider_context = BufferManager.get_context_buffers()
+    local new_context = BufferManager.get_context_buffers()
+    if not vim.deep_equal(aider_context, new_context) then
+        aider_context = new_context
+        require('aider.command_executor').update_aider_context()
+    end
 end
 
 function BufferManager.get_aider_context()

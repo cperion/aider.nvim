@@ -52,7 +52,7 @@ function WindowManager.create_split_window(buf, direction)
         opts.width = math.floor(width / 2)
         opts.height = height
         opts.row = 0
-        opts.col = 0
+        opts.col = math.floor(width / 2)  -- Change this line to position the window on the right
     else -- horizontal split
         opts.width = width
         opts.height = math.floor(height / 2)
@@ -60,7 +60,9 @@ function WindowManager.create_split_window(buf, direction)
         opts.col = 0
     end
 
-    aider_win = vim.api.nvim_open_win(buf, true, opts)
+    vim.cmd(direction .. ' new')  -- Add this line to create a new split
+    aider_win = vim.api.nvim_get_current_win()  -- Get the newly created window
+    vim.api.nvim_win_set_buf(aider_win, buf)  -- Set the buffer in the new window
     vim.api.nvim_win_set_option(aider_win, "winblend", 0)
 end
 

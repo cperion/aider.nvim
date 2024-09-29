@@ -37,7 +37,7 @@ function Aider.setup_autocommands()
 
     vim.api.nvim_create_autocmd({ "BufEnter", "BufLeave", "BufWritePost" }, {
         group = aider_group,
-        pattern = "Aider",
+        pattern = "*",  -- Change this to match all buffers
         callback = function()
             require('aider.core').debounce_update()
         end,

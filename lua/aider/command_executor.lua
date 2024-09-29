@@ -57,13 +57,7 @@ end
 function CommandExecutor.update_aider_context()
     if aider_job_id then
         local new_context = BufferManager.get_aider_context()
-        local files_to_drop = BufferManager.get_files_to_drop()
-        ContextManager.update(new_context)
         local commands = ContextManager.get_batched_commands()
-
-        if #files_to_drop > 0 then
-            table.insert(commands, "/drop " .. table.concat(files_to_drop, " "))
-        end
 
         if #commands > 0 then
             CommandExecutor.execute_commands(commands)
