@@ -3,11 +3,14 @@ local BufferManager = require("aider.buffer_manager")
 local CommandExecutor = require("aider.command_executor")
 local ContextManager = require("aider.context_manager")
 local config = require("aider.config")
+local Logger = require("aider.logger")
 
 local Aider = {}
 local update_timer = nil
 
 function Aider.setup()
+    Logger.setup()
+    Logger.info("Setting up Aider")
     WindowManager.setup()
     BufferManager.setup()
     CommandExecutor.setup()
@@ -15,6 +18,7 @@ function Aider.setup()
 
     Aider.setup_autocommands()
     Aider.setup_keybindings()
+    Logger.info("Aider setup complete")
 end
 
 function Aider.open(args, layout)
@@ -43,9 +47,12 @@ function Aider.toggle()
 end
 
 function Aider.cleanup()
+    Logger.info("Cleaning up Aider")
     WindowManager.hide_window()
     CommandExecutor.stop_aider()
+    Logger.cleanup()
     -- Clear any other resources or state
+    Logger.info("Aider cleanup complete")
 end
 
 function Aider.setup_autocommands()

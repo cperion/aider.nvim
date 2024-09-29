@@ -9,6 +9,8 @@ local default_config = {
         open = "<leader> ",
         toggle = "<leader>at",
     },
+    log_level = vim.log.levels.INFO,
+    log_file = nil, -- Set to a file path to enable file logging
 }
 
 local user_config = {}

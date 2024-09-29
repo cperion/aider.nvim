@@ -1,5 +1,6 @@
 local BufferManager = require("aider.buffer_manager")
 local ContextManager = require("aider.context_manager")
+local Logger = require("aider.logger")
 
 local CommandExecutor = {}
 local aider_job_id = nil
@@ -21,6 +22,7 @@ function CommandExecutor.start_aider(buf, args)
     local context_buffers = BufferManager.get_aider_context()
     local command = "aider " .. args .. " " .. table.concat(context_buffers, " ")
 
+    Logger.info("Starting Aider with command: " .. command)
     aider_buf = buf
 
     -- Ensure the buffer is modifiable
@@ -81,9 +83,9 @@ function CommandExecutor.on_aider_exit(exit_code)
     ContextManager.update({})
     vim.schedule(function()
         if exit_code ~= nil then
-            vim.notify("Aider finished with exit code " .. tostring(exit_code))
+            Logger.info("Aider finished with exit code " .. tostring(exit_code))
         else
-            vim.notify("Aider finished")
+            Logger.info("Aider finished")
         end
     end)
 end
