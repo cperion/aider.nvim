@@ -1,5 +1,5 @@
-local BufferManager = require("buffer_manager")
-local ContextManager = require("context_manager")
+local BufferManager = require("aider.buffer_manager")
+local ContextManager = require("aider.context_manager")
 
 local CommandExecutor = {}
 local aider_job_id = nil

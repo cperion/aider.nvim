@@ -1,8 +1,8 @@
-local WindowManager = require("window_manager")
-local BufferManager = require("buffer_manager")
-local CommandExecutor = require("command_executor")
-local ContextManager = require("context_manager")
-local config = require("config")
+local WindowManager = require("aider.window_manager")
+local BufferManager = require("aider.buffer_manager")
+local CommandExecutor = require("aider.command_executor")
+local ContextManager = require("aider.context_manager")
+local config = require("aider.config")
 
 local Aider = {}
 local update_timer = nil
