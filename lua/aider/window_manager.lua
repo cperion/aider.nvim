@@ -29,7 +29,9 @@ function WindowManager.create_window(buf, layout)
 end
 
 function WindowManager.create_float_window(buf)
+    Logger.debug("Creating floating window for buffer: " .. tostring(buf))
     if not buf or not vim.api.nvim_buf_is_valid(buf) then
+        Logger.error("Invalid buffer handle: " .. tostring(buf))
         vim.notify("Invalid buffer handle", vim.log.levels.ERROR)
         return
     end
@@ -51,9 +53,14 @@ function WindowManager.create_float_window(buf)
         border = "rounded",
     }
 
+    Logger.debug("Window options: " .. vim.inspect(opts))
+
     aider_win = vim.api.nvim_open_win(buf, true, opts)
     if not aider_win then
+        Logger.error("Failed to create Aider window")
         vim.notify("Failed to create Aider window", vim.log.levels.ERROR)
+    else
+        Logger.debug("Aider window created successfully: " .. tostring(aider_win))
     end
 end
 

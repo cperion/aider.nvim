@@ -22,7 +22,8 @@ function CommandExecutor.start_aider(buf, args)
     local context_buffers = BufferManager.get_aider_context()
     local command = "aider " .. args .. " " .. table.concat(context_buffers, " ")
 
-    Logger.info("Starting Aider with command: " .. command)
+    Logger.debug("Starting Aider with command: " .. command)
+    Logger.debug("Context buffers: " .. vim.inspect(context_buffers))
     aider_buf = buf
 
     -- Ensure the buffer is modifiable
@@ -37,6 +38,7 @@ function CommandExecutor.start_aider(buf, args)
     -- Create a terminal in the buffer
     aider_job_id = vim.api.nvim_open_term(buf, {
         on_exit = function(_, exit_code, _)
+            Logger.debug("Aider job exited with code: " .. tostring(exit_code))
             CommandExecutor.on_aider_exit(exit_code)
         end,
     })
@@ -54,6 +56,7 @@ function CommandExecutor.start_aider(buf, args)
     vim.schedule(function()
         vim.cmd("startinsert")
     end)
+    Logger.debug("Aider started successfully")
 end
 
 function CommandExecutor.update_aider_context()
@@ -61,9 +64,15 @@ function CommandExecutor.update_aider_context()
         local new_context = BufferManager.get_aider_context()
         local commands = ContextManager.get_batched_commands()
 
+        Logger.debug("Updating Aider context")
+        Logger.debug("New context: " .. vim.inspect(new_context))
+        Logger.debug("Generated commands: " .. vim.inspect(commands))
+
         if #commands > 0 then
             CommandExecutor.execute_commands(commands)
         end
+    else
+        Logger.debug("Aider job is not running, context update skipped")
     end
 end
 
