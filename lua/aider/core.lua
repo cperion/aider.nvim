@@ -22,31 +22,17 @@ function Aider.setup()
 end
 
 function Aider.open(args, layout)
-	local correlation_id = Logger.generate_correlation_id()
-	Logger.debug("Opening Aider window", correlation_id)
-	Logger.debug("Args: " .. vim.inspect(args) .. ", Layout: " .. tostring(layout), correlation_id)
-	local buf = BufferManager.get_aider_buffer()
-	
-	-- Use the provided layout or the default vsplit layout
-	local used_layout = layout or current_layout
-	WindowManager.show_window(buf, used_layout)
+    local correlation_id = Logger.generate_correlation_id()
+    Logger.debug("Opening Aider window", correlation_id)
+    Logger.debug("Args: " .. vim.inspect(args) .. ", Layout: " .. tostring(layout), correlation_id)
+    local buf = BufferManager.get_aider_buffer()
+    
+    -- Use the provided layout or the default vsplit layout
+    local used_layout = layout or current_layout
+    WindowManager.show_window(buf, used_layout)
 
-	-- Check if the buffer is empty
-	local is_buffer_empty = function(buffer)
-		local line_count = vim.api.nvim_buf_line_count(buffer)
-		if line_count == 0 then
-			return true
-		elseif line_count == 1 then
-			local first_line = vim.api.nvim_buf_get_lines(buffer, 0, 1, false)[1]
-			return first_line == "" or first_line == nil
-		end
-		return false
-	end
-
-	if is_buffer_empty(buf) then
-		CommandExecutor.start_aider(buf, args)
-	end
-	Logger.debug("Aider window opened", correlation_id)
+    CommandExecutor.start_aider(buf, args)
+    Logger.debug("Aider window opened", correlation_id)
 end
 
 function Aider.toggle()
