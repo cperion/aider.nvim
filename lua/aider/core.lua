@@ -85,7 +85,7 @@ function Aider.debounce_update()
   if update_timer then
     if type(update_timer) == "table" and update_timer.stop then
       update_timer:stop()
-    elseif type(update_timer) == "number" and vim.loop.is_active(update_timer) then
+    elseif type(update_timer) == "number" then
       vim.loop.timer_stop(update_timer)
     end
   end
@@ -105,7 +105,7 @@ function Aider.on_aider_buffer_enter()
 end
 
 function Aider.setup_keybindings()
-	local open_key = config.get("keys.open") or "<leader> "
+	local open_key = config.get("keys.open") or "<leader>ao"
 	local toggle_key = config.get("keys.toggle") or "<leader>at"
 
 	vim.keymap.set("n", tostring(open_key), function()
