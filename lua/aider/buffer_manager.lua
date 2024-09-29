@@ -18,10 +18,10 @@ function BufferManager.get_or_create_aider_buffer()
 			return nil
 		end
 		vim.api.nvim_buf_set_name(aider_buf, "Aider")
-		vim.api.nvim_set_option_value("buftype", "nofile", { buf = aider_buf })
-		vim.api.nvim_set_option_value("bufhidden", "hide", { buf = aider_buf })
-		vim.api.nvim_set_option_value("swapfile", false, { buf = aider_buf })
-		vim.api.nvim_set_option_value("buflisted", false, { buf = aider_buf })
+		vim.api.nvim_set_option_value("buftype", "nofile", {buf = aider_buf})
+		vim.api.nvim_set_option_value("bufhidden", "hide", {buf = aider_buf})
+		vim.api.nvim_set_option_value("swapfile", false, {buf = aider_buf})
+		vim.api.nvim_set_option_value("buflisted", false, {buf = aider_buf})
 		return aider_buf
 	end
 end

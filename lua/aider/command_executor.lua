@@ -20,7 +20,7 @@ function CommandExecutor.start_aider(buf, args)
     Logger.debug("Command: " .. command, correlation_id)
 
     -- Ensure the buffer is modifiable and clear it
-    vim.api.nvim_buf_set_option(buf, 'modifiable', true)
+    vim.api.nvim_set_option_value('modifiable', true, {buf = buf})
     vim.api.nvim_buf_set_lines(buf, 0, -1, false, {})
 
     -- Start the job
@@ -39,8 +39,8 @@ function CommandExecutor.start_aider(buf, args)
     end
 
     -- Set buffer-specific options
-    vim.api.nvim_buf_set_option(buf, 'buftype', 'nofile')
-    vim.api.nvim_buf_set_option(buf, 'swapfile', false)
+    vim.api.nvim_set_option_value('buftype', 'nofile', {buf = buf})
+    vim.api.nvim_set_option_value('swapfile', false, {buf = buf})
     vim.api.nvim_buf_set_name(buf, "Aider")
 
     aider_buf = buf
@@ -52,9 +52,9 @@ end
 function CommandExecutor.on_output(buf, data)
     if data then
         vim.schedule(function()
-            vim.api.nvim_buf_set_option(buf, 'modifiable', true)
+            vim.api.nvim_set_option_value('modifiable', true, {buf = buf})
             vim.api.nvim_buf_set_lines(buf, -1, -1, false, data)
-            vim.api.nvim_buf_set_option(buf, 'modifiable', false)
+            vim.api.nvim_set_option_value('modifiable', false, {buf = buf})
         end)
     end
 end
