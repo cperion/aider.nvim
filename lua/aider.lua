@@ -1,1 +1,2 @@
-return require("aider.init")
+local aider = require("aider.init")
+return aider
