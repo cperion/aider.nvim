@@ -31,7 +31,14 @@ function Aider.toggle()
         WindowManager.hide_aider_window()
     else
         local buf = BufferManager.get_aider_buffer()
-        WindowManager.show_window(buf, config.get("default_layout"))
+        local default_layout = config.get("default_layout")
+        if default_layout then
+            WindowManager.show_window(buf, default_layout)
+        else
+            -- Handle the case when default_layout is nil
+            vim.notify("Default layout is not configured. Using 'float' as fallback.", vim.log.levels.WARN)
+            WindowManager.show_window(buf, "float")
+        end
     end
 end
 

@@ -22,7 +22,8 @@ function Config.get(key)
     for part in string.gmatch(key, "[^.]+") do
         value = value[part]
         if value == nil then
-            return nil
+            -- If the key is not found in user_config, check default_config
+            return default_config[key]
         end
     end
     return value
