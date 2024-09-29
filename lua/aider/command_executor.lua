@@ -14,10 +14,20 @@ function CommandExecutor.start_aider(buf, args)
     local correlation_id = Logger.generate_correlation_id()
     args = args or ""
     local context_buffers = BufferManager.get_aider_context()
-    local command = "aider " .. args .. " " .. table.concat(context_buffers, " ")
+    
+    -- Construct the command
+    local command = {"aider"}
+    if args ~= "" then
+        for arg in args:gmatch("%S+") do
+            table.insert(command, arg)
+        end
+    end
+    for _, file in ipairs(context_buffers) do
+        table.insert(command, file)
+    end
 
     Logger.info("Starting Aider", correlation_id)
-    Logger.debug("Command: " .. command, correlation_id)
+    Logger.debug("Command: " .. vim.inspect(command), correlation_id)
 
     -- Ensure the buffer is modifiable and clear it
     vim.api.nvim_set_option_value('modifiable', true, {buf = buf})
@@ -31,6 +41,7 @@ function CommandExecutor.start_aider(buf, args)
             Logger.debug("Aider job exited with code: " .. tostring(exit_code), correlation_id)
             CommandExecutor.on_aider_exit(exit_code)
         end,
+        pty = true,  -- This enables full terminal emulation
     })
 
     if aider_job_id <= 0 then
@@ -39,7 +50,7 @@ function CommandExecutor.start_aider(buf, args)
     end
 
     -- Set buffer-specific options
-    vim.api.nvim_set_option_value('buftype', 'nofile', {buf = buf})
+    vim.api.nvim_set_option_value('buftype', 'terminal', {buf = buf})
     vim.api.nvim_set_option_value('swapfile', false, {buf = buf})
     vim.api.nvim_buf_set_name(buf, "Aider")
 
