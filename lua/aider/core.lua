@@ -16,20 +16,20 @@ function Aider.setup()
 end
 
 function Aider.open(args, layout)
-	local buf = BufferManager.get_or_create_aider_buffer()
-	WindowManager.show_aider_window(buf, layout or config.get("default_layout"))
+    local buf = BufferManager.get_or_create_aider_buffer()
+    WindowManager.show_aider_window(buf, layout or config.get("default_layout"))
 
-	if vim.api.nvim_buf_line_count(buf) == 1 and vim.api.nvim_buf_get_lines(buf, 0, -1, false)[1] == "" then
-		CommandExecutor.start_aider(buf, args)
-	end
+    if vim.api.nvim_buf_line_count(buf) == 1 and vim.api.nvim_buf_get_lines(buf, 0, -1, false)[1] == "" then
+        CommandExecutor.start_aider(buf, args)
+    end
 end
 
 function Aider.toggle(layout)
-	if WindowManager.is_aider_window_open() then
-		WindowManager.hide_aider_window()
-	else
-		Aider.open(nil, layout)
-	end
+    if WindowManager.is_aider_window_open() then
+        WindowManager.hide_aider_window()
+    else
+        Aider.open(nil, layout)
+    end
 end
 
 function Aider.setup_autocommands()

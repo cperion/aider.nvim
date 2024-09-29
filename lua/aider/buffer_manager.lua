@@ -3,29 +3,28 @@ local aider_buf = nil
 local aider_context = {}
 
 function BufferManager.setup()
-	BufferManager.update_context()
-	if not aider_buf or not vim.api.nvim_buf_is_valid(aider_buf) then
-		aider_buf = BufferManager.get_or_create_aider_buffer()
-	end
+    BufferManager.update_context()
+    if not aider_buf or not vim.api.nvim_buf_is_valid(aider_buf) then
+        aider_buf = BufferManager.get_or_create_aider_buffer()
+    end
 end
 
 function BufferManager.get_or_create_aider_buffer()
-	if aider_buf and vim.api.nvim_buf_is_valid(aider_buf) then
-		return aider_buf
-	else
-		-- Create a new buffer with 'nofile' type
-		aider_buf = vim.api.nvim_create_buf(false, true)
+    if aider_buf and vim.api.nvim_buf_is_valid(aider_buf) then
+        return aider_buf
+    else
+        aider_buf = vim.api.nvim_create_buf(false, true)
+        vim.api.nvim_buf_set_name(aider_buf, "Aider")
+        vim.api.nvim_buf_set_option(aider_buf, "buftype", "nofile")
+        vim.api.nvim_buf_set_option(aider_buf, "bufhidden", "hide")
+        vim.api.nvim_buf_set_option(aider_buf, "swapfile", false)
+        vim.api.nvim_buf_set_option(aider_buf, "buflisted", false)
+        return aider_buf
+    end
+end
 
-		-- Set buffert name
-		vim.api.nvim_buf_set_name(aider_buf, "Aider")
-
-		-- Set buffer options
-		vim.api.nvim_buf_set_option(aider_buf, "bufhidden", "hide")
-		vim.api.nvim_buf_set_option(aider_buf, "swapfile", false)
-		vim.api.nvim_buf_set_option(aider_buf, "buflisted", false)
-	end
-
-	return aider_buf
+function BufferManager.is_aider_buffer(buf)
+    return buf == aider_buf
 end
 
 function BufferManager.get_context_buffers()
