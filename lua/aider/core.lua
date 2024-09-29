@@ -28,7 +28,7 @@ end
 
 function Aider.toggle()
     if WindowManager.is_window_open() then
-        WindowManager.hide_window()
+        WindowManager.hide_aider_window()
     else
         local buf = BufferManager.get_aider_buffer()
         WindowManager.show_window(buf, config.get("default_layout"))

@@ -76,4 +76,8 @@ function WindowManager.is_aider_window_open()
     return aider_win ~= nil and vim.api.nvim_win_is_valid(aider_win)
 end
 
+function WindowManager.is_window_open()
+    return aider_win ~= nil and vim.api.nvim_win_is_valid(aider_win)
+end
+
 return WindowManager
