@@ -98,7 +98,7 @@ function CommandExecutor.on_aider_exit(exit_code)
     current_context = {}
     vim.schedule(function()
         if exit_code ~= nil then
-            vim.notify("Aider finished with exit code " .. exit_code)
+            vim.notify("Aider finished with exit code " .. tostring(exit_code))
         else
             vim.notify("Aider finished")
         end
