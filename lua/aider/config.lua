@@ -1,3 +1,5 @@
+local Logger = require("aider.logger")
+
 local Config = {}
 
 local default_config = {

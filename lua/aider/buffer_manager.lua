@@ -1,3 +1,4 @@
+local Logger = require("aider.logger")
 local BufferManager = {}
 local aider_buf = nil
 local aider_context = {}
@@ -17,10 +18,10 @@ function BufferManager.get_or_create_aider_buffer()
             return nil
         end
         vim.api.nvim_buf_set_name(aider_buf, "Aider")
-        vim.api.nvim_buf_set_option(aider_buf, "buftype", "nofile")
-        vim.api.nvim_buf_set_option(aider_buf, "bufhidden", "hide")
-        vim.api.nvim_buf_set_option(aider_buf, "swapfile", false)
-        vim.api.nvim_buf_set_option(aider_buf, "buflisted", false)
+        vim.api.nvim_set_option_value("buftype", "nofile", {buf = aider_buf})
+        vim.api.nvim_set_option_value("bufhidden", "hide", {buf = aider_buf})
+        vim.api.nvim_set_option_value("swapfile", false, {buf = aider_buf})
+        vim.api.nvim_set_option_value("buflisted", false, {buf = aider_buf})
         return aider_buf
     end
 end
@@ -43,7 +44,7 @@ end
 
 function BufferManager.should_include_in_context(buf)
     local bufname = vim.api.nvim_buf_get_name(buf)
-    local buftype = vim.api.nvim_buf_get_option(buf, 'buftype')
+    local buftype = vim.api.nvim_get_option_value("buftype", {buf = buf})
     return bufname ~= "" and not bufname:match("^term://") and buftype ~= "terminal" and bufname ~= "Aider"
 end
 

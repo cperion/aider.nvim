@@ -1,7 +1,6 @@
 local WindowManager = require("aider.window_manager")
 local BufferManager = require("aider.buffer_manager")
 local CommandExecutor = require("aider.command_executor")
-local ContextManager = require("aider.context_manager")
 local config = require("aider.config")
 local Logger = require("aider.logger")
 
@@ -15,7 +14,6 @@ function Aider.setup()
     WindowManager.setup()
     BufferManager.setup()
     CommandExecutor.setup()
-    -- Removed ContextManager.setup() call as it doesn't exist
 
     Aider.setup_autocommands()
     Aider.setup_keybindings()
@@ -87,7 +85,12 @@ function Aider.debounce_update()
     if update_timer then
         update_timer:stop()
     end
-    update_timer = vim.loop.new_timer()
+    local timer_ok, new_timer = pcall(vim.loop.new_timer)
+    if not timer_ok then
+        Logger.error("Failed to create timer: " .. tostring(new_timer))
+        return
+    end
+    update_timer = new_timer
     update_timer:start(1000, 0, vim.schedule_wrap(function()
         local new_context = BufferManager.get_context_buffers()
         if not vim.deep_equal(BufferManager.get_aider_context(), new_context) then

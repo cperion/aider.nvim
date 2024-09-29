@@ -32,7 +32,7 @@ return {
       desc = "Run Aider in Background",
     },
   },
-  config = function(_, opts)
+  config = function(opts)
     local aider_ok, aider = pcall(require, "aider")
     if not aider_ok then
       vim.notify("Aider plugin not found", vim.log.levels.ERROR)

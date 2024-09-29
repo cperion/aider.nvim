@@ -1,6 +1,7 @@
+local Logger = require("aider.logger")
+
 local WindowManager = {}
 local aider_win = nil
-local current_layout = nil
 
 function WindowManager.setup()
     -- Any setup needed for window management
@@ -13,7 +14,6 @@ function WindowManager.show_window(buf, layout)
     else
         WindowManager.create_window(buf, layout)
     end
-    current_layout = layout
 end
 
 function WindowManager.create_window(buf, layout)
@@ -65,8 +65,8 @@ function WindowManager.create_float_window(buf)
 end
 
 function WindowManager.create_split_window(buf, direction)
-    local width = vim.api.nvim_get_option('columns')
-    local height = vim.api.nvim_get_option('lines')
+    local width = vim.api.nvim_get_option_value('columns', {})
+    local height = vim.api.nvim_get_option_value('lines', {})
 
     local opts = {
         style = "minimal",
