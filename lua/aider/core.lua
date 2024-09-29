@@ -82,16 +82,22 @@ function Aider.setup_autocommands()
 end
 
 function Aider.debounce_update()
-	if update_timer then
-		vim.loop.timer_stop(update_timer)
-	end
-	update_timer = vim.defer_fn(function()
-		local new_context = BufferManager.get_context_buffers()
-		if not vim.deep_equal(BufferManager.get_aider_context(), new_context) then
-			BufferManager.update_context()
-			CommandExecutor.update_aider_context()
-		end
-	end, 1000)
+  if update_timer then
+    pcall(function()
+      if update_timer.stop then
+        update_timer:stop()
+      elseif vim.loop.timer_stop then
+        vim.loop.timer_stop(update_timer)
+      end
+    end)
+  end
+  update_timer = vim.defer_fn(function()
+    local new_context = BufferManager.get_context_buffers()
+    if not vim.deep_equal(BufferManager.get_aider_context(), new_context) then
+      BufferManager.update_context()
+      CommandExecutor.update_aider_context()
+    end
+  end, 1000)
 end
 
 function Aider.on_aider_buffer_enter()

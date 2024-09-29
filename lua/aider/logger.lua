@@ -24,22 +24,22 @@ function Logger.setup()
 end
 
 local function log(level, message, correlation_id)
-	if log_levels[level] >= current_log_level then
-		local log_message = string.format(
-			"[%s] %s: %s",
-			os.date("%Y-%m-%d %H:%M:%S"),
-			level,
-			type(message) == "string" and message or vim.inspect(message)
-		)
-		if correlation_id then
-			log_message = log_message .. " [CorrelationID: " .. tostring(correlation_id) .. "]"
-		end
-		vim.notify(log_message, vim.log.levels[level])
-		if log_file then
-			log_file:write(log_message .. "\n")
-			log_file:flush()
-		end
-	end
+  if log_levels[level] >= current_log_level then
+    local log_message = string.format(
+      "[%s] %s: %s",
+      os.date("%Y-%m-%d %H:%M:%S"),
+      level,
+      tostring(message)
+    )
+    if correlation_id then
+      log_message = log_message .. " [CorrelationID: " .. tostring(correlation_id) .. "]"
+    end
+    vim.notify(log_message, vim.log.levels[level])
+    if log_file then
+      log_file:write(log_message .. "\n")
+      log_file:flush()
+    end
+  end
 end
 
 function Logger.debug(message, correlation_id)
