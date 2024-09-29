@@ -3,15 +3,16 @@ local ContextManager = require("aider.context_manager")
 
 local CommandExecutor = {}
 local aider_job_id = nil
+local aider_buf = nil
 
 function CommandExecutor.setup()
     -- No setup needed for now
 end
 
 function CommandExecutor.clear_input_line()
-    if aider_job_id then
-        -- Clear the current input line
-        vim.api.nvim_chan_send(aider_job_id, "\27[A\27[K\r")
+    if aider_buf and vim.api.nvim_buf_is_valid(aider_buf) then
+        local line_count = vim.api.nvim_buf_line_count(aider_buf)
+        vim.api.nvim_buf_set_lines(aider_buf, line_count - 1, line_count, false, {""})
     end
 end
 
@@ -19,6 +20,8 @@ function CommandExecutor.start_aider(buf, args)
     args = args or ""
     local context_buffers = BufferManager.get_aider_context()
     local command = "aider " .. args .. " " .. table.concat(context_buffers, " ")
+
+    aider_buf = buf
 
     -- Ensure the buffer is modifiable
     vim.bo[buf].modifiable = true
@@ -80,6 +83,7 @@ end
 
 function CommandExecutor.on_aider_exit(exit_code)
     aider_job_id = nil
+    aider_buf = nil
     ContextManager.update({})
     vim.schedule(function()
         if exit_code ~= nil then
