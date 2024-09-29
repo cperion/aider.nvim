@@ -29,6 +29,11 @@ function WindowManager.create_window(buf, layout)
 end
 
 function WindowManager.create_float_window(buf)
+    if not buf or not vim.api.nvim_buf_is_valid(buf) then
+        vim.notify("Invalid buffer handle", vim.log.levels.ERROR)
+        return
+    end
+
     local width = vim.api.nvim_get_option('columns')
     local height = vim.api.nvim_get_option('lines')
     local win_height = math.ceil(height * 0.8 - 4)
@@ -47,6 +52,9 @@ function WindowManager.create_float_window(buf)
     }
 
     aider_win = vim.api.nvim_open_win(buf, true, opts)
+    if not aider_win then
+        vim.notify("Failed to create Aider window", vim.log.levels.ERROR)
+    end
 end
 
 function WindowManager.create_split_window(buf, direction)

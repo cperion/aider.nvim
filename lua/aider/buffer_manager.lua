@@ -12,6 +12,10 @@ function BufferManager.get_or_create_aider_buffer()
         return aider_buf
     else
         aider_buf = vim.api.nvim_create_buf(false, true)
+        if not aider_buf then
+            vim.notify("Failed to create Aider buffer", vim.log.levels.ERROR)
+            return nil
+        end
         vim.api.nvim_buf_set_name(aider_buf, "Aider")
         vim.api.nvim_buf_set_option(aider_buf, "buftype", "nofile")
         vim.api.nvim_buf_set_option(aider_buf, "bufhidden", "hide")
@@ -22,7 +26,7 @@ function BufferManager.get_or_create_aider_buffer()
 end
 
 function BufferManager.get_aider_buffer()
-    return aider_buf
+    return BufferManager.get_or_create_aider_buffer()
 end
 
 function BufferManager.is_aider_buffer(buf)
