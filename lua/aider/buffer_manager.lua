@@ -35,17 +35,22 @@ function BufferManager.is_aider_buffer(buf)
 end
 
 function BufferManager.get_context_buffers()
-	local current_buf = vim.api.nvim_get_current_buf()
-	if BufferManager.should_include_in_context(current_buf) then
-		return { vim.api.nvim_buf_get_name(current_buf) }
-	end
-	return {}
+    local context_buffers = {}
+    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+        if BufferManager.should_include_in_context(buf) then
+            table.insert(context_buffers, vim.api.nvim_buf_get_name(buf))
+        end
+    end
+    return context_buffers
 end
 
 function BufferManager.should_include_in_context(buf)
-	local bufname = vim.api.nvim_buf_get_name(buf)
-	local buftype = vim.api.nvim_get_option_value("buftype", { buf = buf })
-	return bufname ~= "" and not bufname:match("^term://") and buftype ~= "terminal" and bufname ~= "Aider"
+    local bufname = vim.api.nvim_buf_get_name(buf)
+    local buftype = vim.api.nvim_get_option_value("buftype", { buf = buf })
+    return bufname ~= "" 
+        and not bufname:match("^term://") 
+        and buftype ~= "terminal" 
+        and not BufferManager.is_aider_buffer(buf)
 end
 
 function BufferManager.update_context()
