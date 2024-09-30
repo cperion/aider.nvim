@@ -70,7 +70,11 @@ function ContextManager.get_batched_commands()
     -- Clear pending changes after generating commands
     pending_changes = { add = {}, drop = {} }
 
-    Logger.debug("Generated commands: " .. vim.inspect(commands), correlation_id)
+    if #commands == 0 then
+        Logger.debug("No changes in context, no commands generated", correlation_id)
+    else
+        Logger.debug("Generated commands: " .. vim.inspect(commands), correlation_id)
+    end
 
     return commands
 end
