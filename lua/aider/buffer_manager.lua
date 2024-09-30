@@ -82,7 +82,7 @@ function BufferManager.update_context()
     Logger.debug("Current context: " .. vim.inspect(aider_context), correlation_id)
     Logger.debug("New context: " .. vim.inspect(new_context), correlation_id)
     if not vim.deep_equal(aider_context, new_context) then
-        Logger.info("Context changed, updating Aider", correlation_id)
+        Logger.debug("Context changed, updating Aider", correlation_id)
         aider_context = new_context
         require("aider.command_executor").update_aider_context()
     else

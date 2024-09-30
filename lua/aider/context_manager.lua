@@ -34,7 +34,6 @@ function ContextManager.get_batched_commands()
     for _, file in ipairs(current_context) do
         if not vim.tbl_contains(previous_context, file) then
             table.insert(files_to_add, file)
-            Logger.debug("File to add: " .. file, correlation_id)
         end
     end
 
@@ -42,7 +41,6 @@ function ContextManager.get_batched_commands()
     for _, file in ipairs(previous_context) do
         if not vim.tbl_contains(current_context, file) then
             table.insert(files_to_drop, file)
-            Logger.debug("File to drop: " .. file, correlation_id)
         end
     end
 
@@ -51,16 +49,13 @@ function ContextManager.get_batched_commands()
     if #files_to_add > 0 then
         local add_command = "/add " .. table.concat(files_to_add, " ")
         table.insert(commands, add_command)
-        Logger.debug("Generated add command: " .. add_command, correlation_id)
     end
 
     if #files_to_drop > 0 then
         local drop_command = "/drop " .. table.concat(files_to_drop, " ")
         table.insert(commands, drop_command)
-        Logger.debug("Generated drop command: " .. drop_command, correlation_id)
     end
 
-    Logger.debug("ContextManager.get_batched_commands: Command generation complete", correlation_id)
     Logger.debug("Generated commands: " .. vim.inspect(commands), correlation_id)
 
     return commands
