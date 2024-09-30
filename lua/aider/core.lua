@@ -131,4 +131,14 @@ function Aider.setup_keybindings()
 	end, { silent = true })
 end
 
-return Aidr
+function Aider.mass_sync_context()
+    local correlation_id = Logger.generate_correlation_id()
+    Logger.debug("Aider.mass_sync_context: Starting mass context sync", correlation_id)
+
+    local commands = ContextManager.mass_sync_context()
+    CommandExecutor.queue_commands(commands, true)  -- Set is_context_update to true
+
+    Logger.debug("Aider.mass_sync_context: Mass context sync complete", correlation_id)
+end
+
+return Aider
