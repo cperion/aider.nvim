@@ -11,19 +11,19 @@ local command_queue = {}
 local is_executing = false
 
 local function get_relative_path(file)
-    local cwd = vim.fn.getcwd()
-    local abs_path = Path:new(file):absolute()
-    return Path:new(abs_path):make_relative(cwd)
+	local cwd = vim.fn.getcwd()
+	local abs_path = Path:new(file):absolute()
+	return Path:new(abs_path):make_relative(cwd)
 end
 
 function M.scroll_to_bottom()
-    if aider_buf and vim.api.nvim_buf_is_valid(aider_buf) then
-        local window = vim.fn.bufwinid(aider_buf)
-        if window ~= -1 then
-            local line_count = vim.api.nvim_buf_line_count(aider_buf)
-            vim.api.nvim_win_set_cursor(window, {line_count, 0})
-        end
-    end
+	if aider_buf and vim.api.nvim_buf_is_valid(aider_buf) then
+		local window = vim.fn.bufwinid(aider_buf)
+		if window ~= -1 then
+			local line_count = vim.api.nvim_buf_line_count(aider_buf)
+			vim.api.nvim_win_set_cursor(window, { line_count, 0 })
+		end
+	end
 end
 
 function M.setup()
@@ -45,57 +45,57 @@ function M.is_aider_running()
 end
 
 function M.start_aider(buf, args, initial_context)
-    local correlation_id = Logger.generate_correlation_id()
-    args = args or ""
-    initial_context = initial_context or {}
+	local correlation_id = Logger.generate_correlation_id()
+	args = args or ""
+	initial_context = initial_context or {}
 
-    Logger.debug("start_aider: Starting with buffer " .. tostring(buf) .. " and args: " .. args, correlation_id)
-    Logger.debug("start_aider: Initial context: " .. vim.inspect(initial_context), correlation_id)
+	Logger.debug("start_aider: Starting with buffer " .. tostring(buf) .. " and args: " .. args, correlation_id)
+	Logger.debug("start_aider: Initial context: " .. vim.inspect(initial_context), correlation_id)
 
-    -- Construct the command
-    local command = "aider " .. args
+	-- Construct the command
+	local command = "aider " .. args
 
-    -- Add each file from the initial context to the command, properly escaped
-    for _, file in ipairs(initial_context) do
-        command = command .. " " .. vim.fn.shellescape(file)
-    end
+	-- Add each file from the initial context to the command, properly escaped
+	for _, file in ipairs(initial_context) do
+		command = command .. " " .. vim.fn.shellescape(file)
+	end
 
-    Logger.info("Starting Aider", correlation_id)
-    Logger.debug("Command: " .. command, correlation_id)
+	Logger.info("Starting Aider", correlation_id)
+	Logger.debug("Command: " .. command, correlation_id)
 
-    -- Start the job using vim.fn.termopen and store the job ID
-    aider_job_id = vim.fn.termopen(command, {
-        on_exit = function(job_id, exit_code, event_type)
-            M.on_aider_exit(exit_code)
-        end,
-    })
+	-- Start the job using vim.fn.termopen and store the job ID
+	aider_job_id = vim.fn.termopen(command, {
+		on_exit = function(job_id, exit_code, event_type)
+			M.on_aider_exit(exit_code)
+		end,
+	})
 
-    if aider_job_id <= 0 then
-        Logger.error("Failed to start Aider job. Job ID: " .. tostring(aider_job_id), correlation_id)
-        return
-    end
+	if aider_job_id <= 0 then
+		Logger.error("Failed to start Aider job. Job ID: " .. tostring(aider_job_id), correlation_id)
+		return
+	end
 
-    Logger.debug("Aider job started with job_id: " .. tostring(aider_job_id), correlation_id)
+	Logger.debug("Aider job started with job_id: " .. tostring(aider_job_id), correlation_id)
 
-    aider_buf = buf
-    ContextManager.update(initial_context)
-    Logger.debug("Context updated", correlation_id)
+	aider_buf = buf
+	ContextManager.update(initial_context)
+	Logger.debug("Context updated", correlation_id)
 
-    Logger.info("Aider started successfully", correlation_id)
+	Logger.info("Aider started successfully", correlation_id)
 
-    -- Scroll to the bottom after starting Aider if auto_scroll is enabled
-    if config.get("auto_scroll") then
-        vim.schedule(function()
-            M.scroll_to_bottom()
-        end)
-    end
+	-- Scroll to the bottom after starting Aider if auto_scroll is enabled
+	if config.get("auto_scroll") then
+		vim.schedule(function()
+			M.scroll_to_bottom()
+		end)
+	end
 
-    -- Scroll to the bottom after starting Aider if auto_scroll is enabled
-    if config.get("auto_scroll") then
-        vim.schedule(function()
-            M.scroll_to_bottom()
-        end)
-    end
+	-- Scroll to the bottom after starting Aider if auto_scroll is enabled
+	if config.get("auto_scroll") then
+		vim.schedule(function()
+			M.scroll_to_bottom()
+		end)
+	end
 end
 
 function M.update_aider_context()
@@ -180,7 +180,7 @@ function M.send_input(input)
 		-- It's raw text, send it without adding a slash
 		vim.fn.chansend(aider_job_id, input)
 	end
-	
+
 	-- Scroll to the bottom after sending input if auto_scroll is enabled
 	if config.get("auto_scroll") then
 		vim.schedule(function()
@@ -190,36 +190,36 @@ function M.send_input(input)
 end
 
 function M.on_buffer_open(bufnr)
-    if not M.is_aider_running() then
-        return
-    end
+	if not M.is_aider_running() then
+		return
+	end
 
-    local bufname = vim.api.nvim_buf_get_name(bufnr)
-    local buftype = vim.api.nvim_buf_get_option(bufnr, "buftype")
-    if not bufname or bufname:match("^term://") or buftype == "terminal" then
-        return
-    end
+	local bufname = vim.api.nvim_buf_get_name(bufnr)
+	local buftype = vim.api.nvim_buf_get_option(bufnr, "buftype")
+	if not bufname or bufname:match("^term://") or buftype == "terminal" then
+		return
+	end
 
-    local relative_filename = get_relative_path(bufname)
-    M.queue_commands({ "/add " .. relative_filename }, true)
+	local relative_filename = get_relative_path(bufname)
+	M.queue_commands({ "/add " .. relative_filename }, true)
 
-    Logger.debug("Buffer opened: " .. relative_filename)
+	Logger.debug("Buffer opened: " .. relative_filename)
 end
 
 function M.on_buffer_close(bufnr)
-    if not M.is_aider_running() then
-        return
-    end
+	if not M.is_aider_running() then
+		return
+	end
 
-    local bufname = vim.api.nvim_buf_get_name(bufnr)
-    if not bufname or bufname:match("^term://") then
-        return
-    end
+	local bufname = vim.api.nvim_buf_get_name(bufnr)
+	if not bufname or bufname:match("^term://") then
+		return
+	end
 
-    local relative_filename = get_relative_path(bufname)
-    M.queue_commands({ "/drop " .. relative_filename }, true)
+	local relative_filename = get_relative_path(bufname)
+	M.queue_commands({ "/drop " .. relative_filename }, true)
 
-    Logger.debug("Buffer closed: " .. relative_filename)
+	Logger.debug("Buffer closed: " .. relative_filename)
 end
 
 function M.on_aider_exit(exit_code)
