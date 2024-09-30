@@ -9,16 +9,22 @@ local update_timer = nil
 local current_layout = "vsplit"
 
 function Aider.setup()
-	Logger.setup()
-	Logger.debug("Aider.setup: Starting Aider setup")
-	Logger.debug("Aider.setup: User config: " .. vim.inspect(config.get_all()))
-	WindowManager.setup()
-	BufferManager.setup()
-	CommandExecutor.setup()
+    Logger.debug("Aider.setup: Starting Aider setup")
+    Logger.setup()
+    Logger.debug("Aider.setup: Logger setup complete")
+    Logger.debug("Aider.setup: User config: " .. vim.inspect(config.get_all()))
+    WindowManager.setup()
+    Logger.debug("Aider.setup: WindowManager setup complete")
+    BufferManager.setup()
+    Logger.debug("Aider.setup: BufferManager setup complete")
+    CommandExecutor.setup()
+    Logger.debug("Aider.setup: CommandExecutor setup complete")
 
-	Aider.setup_autocommands()
-	Aider.setup_keybindings()
-	Logger.debug("Aider.setup: Aider setup complete")
+    Aider.setup_autocommands()
+    Logger.debug("Aider.setup: Autocommands setup complete")
+    Aider.setup_keybindings()
+    Logger.debug("Aider.setup: Keybindings setup complete")
+    Logger.debug("Aider.setup: Aider setup complete")
 end
 
 function Aider.open(args, layout)
