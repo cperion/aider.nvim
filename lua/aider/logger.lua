@@ -25,7 +25,7 @@ function Logger.setup()
     local plugin_dir = get_plugin_directory()
     local log_path = plugin_dir / "aider.log"
     
-    log_file = io.open(log_path.filename, "a")
+    log_file = io.open(log_path.filename, "w")  -- Changed from "a" to "w"
     if not log_file then
         vim.notify("Failed to open log file: " .. log_path.filename, vim.log.levels.ERROR)
     else
