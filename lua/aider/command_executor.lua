@@ -22,23 +22,12 @@ function CommandExecutor.start_aider(buf, args)
     Logger.debug("start_aider: Starting with buffer " .. tostring(buf) .. " and args: " .. args, correlation_id)
     Logger.debug("start_aider: Context buffers: " .. vim.inspect(context_buffers), correlation_id)
 
-    -- Check if the buffer is valid
-    if not vim.api.nvim_buf_is_valid(buf) then
-        Logger.error("Invalid buffer: " .. tostring(buf), correlation_id)
-        return
-    end
-
     -- Construct the command
     local command = "aider " .. args
     command = CommandExecutor.add_buffers_to_command(command, context_buffers)
 
     Logger.info("Starting Aider", correlation_id)
     Logger.debug("Command: " .. command, correlation_id)
-
-    -- Ensure the buffer is a terminal buffer
-    vim.api.nvim_buf_set_option(buf, 'buftype', 'terminal')
-    vim.api.nvim_buf_set_option(buf, 'swapfile', false)
-    vim.api.nvim_buf_set_name(buf, "Aider")
 
     -- Start the job using vim.fn.termopen
     aider_job_id = vim.fn.termopen(command, {
