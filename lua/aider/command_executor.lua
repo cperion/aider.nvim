@@ -4,43 +4,9 @@ local Logger = require("aider.logger")
 
 local M = {}
 local aider_buf = nil
-M.aider_job_id = nil
+local aider_job_id = nil
 local command_queue = {}
 local is_executing = false
-
-local function append_commands(buf, commands)
-    -- Check if the buffer exists and is valid
-    if not vim.api.nvim_buf_is_valid(buf) then
-        Logger.error("Invalid buffer")
-        return false
-    end
-
-    -- Save the current modifiable state
-    local was_modifiable = vim.api.nvim_buf_get_option(buf, 'modifiable')
-
-    -- Set the buffer to modifiable
-    vim.api.nvim_buf_set_option(buf, 'modifiable', true)
-
-    local line_count = vim.api.nvim_buf_line_count(buf)
-    
-    -- Insert new commands
-    for _, cmd in ipairs(commands) do
-        vim.api.nvim_buf_set_lines(buf, -1, -1, false, {cmd})
-    end
-
-    -- Move cursor to the end of the buffer
-    vim.api.nvim_win_set_cursor(0, {line_count + #commands, 0})
-
-    -- Simulate Enter key press for each command
-    for _ = 1, #commands do
-        vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<CR>", true, false, true), "n", true)
-    end
-
-    -- Restore the original modifiable state
-    vim.api.nvim_buf_set_option(buf, 'modifiable', was_modifiable)
-
-    return true
-end
 
 function M.setup()
     vim.api.nvim_create_autocmd("BufReadPost", {
@@ -57,7 +23,7 @@ function M.setup()
 end
 
 function M.is_aider_running()
-    return M.aider_job_id ~= nil and M.aider_job_id > 0
+    return aider_job_id ~= nil and aider_job_id > 0
 end
 
 function M.start_aider(buf, args)
@@ -79,19 +45,19 @@ function M.start_aider(buf, args)
     Logger.info("Starting Aider", correlation_id)
     Logger.debug("Command: " .. command, correlation_id)
 
-    -- Start the job using vim.fn.termopen
-    M.aider_job_id = vim.fn.termopen(command, {
+    -- Start the job using vim.fn.termopen and store the job ID
+    aider_job_id = vim.fn.termopen(command, {
         on_exit = function(job_id, exit_code, event_type)
             M.on_aider_exit(exit_code)
         end,
     })
 
-    if M.aider_job_id <= 0 then
-        Logger.error("Failed to start Aider job. Job ID: " .. tostring(M.aider_job_id), correlation_id)
+    if aider_job_id <= 0 then
+        Logger.error("Failed to start Aider job. Job ID: " .. tostring(aider_job_id), correlation_id)
         return
     end
 
-    Logger.debug("Aider job started with job_id: " .. tostring(M.aider_job_id), correlation_id)
+    Logger.debug("Aider job started with job_id: " .. tostring(aider_job_id), correlation_id)
 
     aider_buf = buf
     ContextManager.update(context_buffers)
@@ -156,22 +122,18 @@ function M.process_command_queue()
 
     -- Process context update commands first
     if #context_update_commands > 0 then
-        local success, err = pcall(append_commands, aider_buf, context_update_commands)
-        if not success then
-            Logger.error("Failed to execute context update commands: " .. tostring(err))
-        else
-            Logger.debug("Context update commands executed in Aider buffer: " .. vim.inspect(context_update_commands))
+        for _, cmd in ipairs(context_update_commands) do
+            vim.fn.chansend(aider_job_id, cmd .. "\n")
         end
+        Logger.debug("Context update commands sent to Aider: " .. vim.inspect(context_update_commands))
     end
 
     -- Process user commands
     if #commands_to_send > 0 then
-        local success, err = pcall(append_commands, aider_buf, commands_to_send)
-        if not success then
-            Logger.error("Failed to execute user commands: " .. tostring(err))
-        else
-            Logger.debug("User commands executed in Aider buffer: " .. vim.inspect(commands_to_send))
+        for _, cmd in ipairs(commands_to_send) do
+            vim.fn.chansend(aider_job_id, cmd .. "\n")
         end
+        Logger.debug("User commands sent to Aider: " .. vim.inspect(commands_to_send))
     end
 
     -- Wait for a short time before processing the next batch of commands
@@ -215,7 +177,7 @@ function M.on_buffer_close(bufnr)
 end
 
 function M.on_aider_exit(exit_code)
-    M.aider_job_id = nil
+    aider_job_id = nil
     aider_buf = nil
     command_queue = {}
     is_executing = false
