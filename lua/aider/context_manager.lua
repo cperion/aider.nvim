@@ -92,6 +92,9 @@ function ContextManager.mass_sync_context()
         table.insert(commands, add_command)
     end
 
+    -- Add a final carriage return
+    table.insert(commands, "")
+
     -- Update the current context
     current_context = current_buffers
     pending_changes = {add = {}, drop = {}}
