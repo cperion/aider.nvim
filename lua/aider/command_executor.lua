@@ -33,17 +33,17 @@ function CommandExecutor.start_aider(buf, args)
     vim.api.nvim_buf_set_option(buf, 'modifiable', true)
     vim.api.nvim_buf_set_lines(buf, 0, -1, false, {})
 
+    -- Set buffer-specific options before starting the job
+    vim.api.nvim_buf_set_option(buf, 'buftype', 'terminal')
+    vim.api.nvim_buf_set_option(buf, 'swapfile', false)
+    vim.api.nvim_buf_set_name(buf, "Aider")
+
     -- Start the job
-    aider_job_id = vim.fn.jobstart(command, {
-        on_stdout = function(_, data) CommandExecutor.on_output(buf, data) end,
-        on_stderr = function(_, data) CommandExecutor.on_output(buf, data) end,
+    aider_job_id = vim.fn.termopen(command, {
         on_exit = function(_, exit_code)
             Logger.debug("Aider job exited with code: " .. tostring(exit_code), correlation_id)
             CommandExecutor.on_aider_exit(exit_code)
         end,
-        pty = true,
-        stderr_buffered = false,
-        stdout_buffered = false,
     })
 
     if aider_job_id <= 0 then
@@ -51,40 +51,16 @@ function CommandExecutor.start_aider(buf, args)
         return
     end
 
-    -- Set buffer-specific options
-    vim.api.nvim_buf_set_option(buf, 'buftype', 'terminal')
-    vim.api.nvim_buf_set_option(buf, 'swapfile', false)
-    vim.api.nvim_buf_set_name(buf, "Aider")
-
     aider_buf = buf
     ContextManager.update(context_buffers)
+
+    -- Enter insert mode to allow immediate input
+    vim.cmd('startinsert')
 
     Logger.info("Aider started successfully", correlation_id)
 end
 
-function CommandExecutor.on_output(buf, data)
-    if data then
-        vim.schedule(function()
-            -- Filter out empty lines
-            local non_empty_lines = vim.tbl_filter(function(line)
-                return line ~= ""
-            end, data)
-            
-            if #non_empty_lines > 0 then
-                vim.api.nvim_buf_set_option(buf, 'modifiable', true)
-                vim.api.nvim_buf_set_lines(buf, -1, -1, false, non_empty_lines)
-                vim.api.nvim_buf_set_option(buf, 'modifiable', false)
-                
-                -- Scroll to the bottom of the buffer
-                local win = vim.fn.bufwinid(buf)
-                if win ~= -1 then
-                    local line_count = vim.api.nvim_buf_line_count(buf)
-                    vim.api.nvim_win_set_cursor(win, {line_count, 0})
-                end
-            end
-        end)
-    end
-end
+-- Function removed as it's no longer needed with termopen
 
 function CommandExecutor.update_aider_context()
     local correlation_id = Logger.generate_correlation_id()
@@ -109,7 +85,7 @@ end
 function CommandExecutor.execute_commands(commands)
     if aider_job_id and aider_job_id > 0 then
         local command_string = table.concat(commands, "\n") .. "\n"
-        vim.fn.chansend(aider_job_id, command_string)
+        vim.api.nvim_chan_send(aider_job_id, command_string)
     else
         vim.notify("Aider job is not running", vim.log.levels.WARN)
     end
