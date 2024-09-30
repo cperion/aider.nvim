@@ -1,4 +1,5 @@
 local config = require("aider.config")
+local Path = require("plenary.path")
 
 local Logger = {}
 
@@ -12,15 +13,24 @@ local log_levels = {
 local current_log_level = log_levels.INFO
 local log_file = nil
 
+local function get_plugin_directory()
+    local source = debug.getinfo(1, "S").source
+    local file = string.sub(source, 2)  -- Remove the '@' at the beginning
+    return Path:new(file):parent():parent():parent()
+end
+
 function Logger.setup()
-	current_log_level = log_levels[config.get("log_level")] or log_levels.INFO
-	local log_path = config.get("log_file")
-	if log_path then
-		log_file = io.open(log_path, "a")
-		if not log_file then
-			vim.notify("Failed to open log file: " .. log_path, vim.log.levels.ERROR)
-		end
-	end
+    current_log_level = log_levels[config.get("log_level")] or log_levels.INFO
+    
+    local plugin_dir = get_plugin_directory()
+    local log_path = plugin_dir / "aider.log"
+    
+    log_file = io.open(log_path.filename, "a")
+    if not log_file then
+        vim.notify("Failed to open log file: " .. log_path.filename, vim.log.levels.ERROR)
+    else
+        vim.notify("Aider log file: " .. log_path.filename, vim.log.levels.INFO)
+    end
 end
 
 local function log(level, message, correlation_id)
