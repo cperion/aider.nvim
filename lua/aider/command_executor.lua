@@ -2,12 +2,19 @@ local BufferManager = require("aider.buffer_manager")
 local ContextManager = require("aider.context_manager")
 local Logger = require("aider.logger")
 local config = require("aider.config")
+local Path = require("plenary.path")
 
 local M = {}
 local aider_buf = nil
 local aider_job_id = nil
 local command_queue = {}
 local is_executing = false
+
+local function get_relative_path(file)
+    local cwd = vim.fn.getcwd()
+    local abs_path = Path:new(file):absolute()
+    return Path:new(abs_path):make_relative(cwd)
+end
 
 function M.scroll_to_bottom()
     if aider_buf and vim.api.nvim_buf_is_valid(aider_buf) then
@@ -176,36 +183,36 @@ function M.send_input(input)
 end
 
 function M.on_buffer_open(bufnr)
-	if not M.is_aider_running() then
-		return
-	end
+    if not M.is_aider_running() then
+        return
+    end
 
-	local bufname = vim.api.nvim_buf_get_name(bufnr)
-	local buftype = vim.api.nvim_buf_get_option(bufnr, "buftype")
-	if not bufname or bufname:match("^term://") or buftype == "terminal" then
-		return
-	end
+    local bufname = vim.api.nvim_buf_get_name(bufnr)
+    local buftype = vim.api.nvim_buf_get_option(bufnr, "buftype")
+    if not bufname or bufname:match("^term://") or buftype == "terminal" then
+        return
+    end
 
-	local relative_filename = vim.fn.fnamemodify(bufname, ":~:.")
-	M.queue_commands({ "/add " .. relative_filename }, true) -- Command stays the same
+    local relative_filename = get_relative_path(bufname)
+    M.queue_commands({ "/add " .. relative_filename }, true)
 
-	Logger.debug("Buffer opened: " .. relative_filename)
+    Logger.debug("Buffer opened: " .. relative_filename)
 end
 
 function M.on_buffer_close(bufnr)
-	if not M.is_aider_running() then
-		return
-	end
+    if not M.is_aider_running() then
+        return
+    end
 
-	local bufname = vim.api.nvim_buf_get_name(bufnr)
-	if not bufname or bufname:match("^term://") then
-		return
-	end
+    local bufname = vim.api.nvim_buf_get_name(bufnr)
+    if not bufname or bufname:match("^term://") then
+        return
+    end
 
-	local relative_filename = vim.fn.fnamemodify(bufname, ":~:.")
-	M.queue_commands({ "/drop " .. relative_filename }, true) -- Command stays the same
+    local relative_filename = get_relative_path(bufname)
+    M.queue_commands({ "/drop " .. relative_filename }, true)
 
-	Logger.debug("Buffer closed: " .. relative_filename)
+    Logger.debug("Buffer closed: " .. relative_filename)
 end
 
 function M.on_aider_exit(exit_code)
