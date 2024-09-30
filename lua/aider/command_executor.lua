@@ -42,42 +42,46 @@ function CommandExecutor.start_aider(buf, args)
     Logger.debug("Buffer cleared and set to modifiable", correlation_id)
 
     -- Set buffer-specific options before starting the job
-    vim.api.nvim_buf_set_option(buf, 'buftype', 'terminal')
+    vim.api.nvim_buf_set_option(buf, 'buftype', 'nofile')
     vim.api.nvim_buf_set_option(buf, 'swapfile', false)
     vim.api.nvim_buf_set_name(buf, "Aider")
     Logger.debug("Buffer options set", correlation_id)
 
-    -- Start the job
-    local ok, result = pcall(function()
-        return vim.fn.termopen(command, {
-            on_exit = function(_, exit_code)
-                Logger.debug("Aider job exited with code: " .. tostring(exit_code), correlation_id)
-                CommandExecutor.on_aider_exit(exit_code)
-            end,
-        })
-    end)
+    -- Start the job using vim.fn.jobstart
+    local job_id = vim.fn.jobstart(command, {
+        stdout_buffered = true,
+        stderr_buffered = true,
+        on_stdout = function(_, data)
+            vim.schedule(function()
+                if buf and vim.api.nvim_buf_is_valid(buf) then
+                    vim.api.nvim_buf_set_lines(buf, -1, -1, false, data)
+                end
+            end)
+        end,
+        on_stderr = function(_, data)
+            vim.schedule(function()
+                if buf and vim.api.nvim_buf_is_valid(buf) then
+                    vim.api.nvim_buf_set_lines(buf, -1, -1, false, data)
+                end
+            end)
+        end,
+        on_exit = function(_, exit_code)
+            Logger.debug("Aider job exited with code: " .. tostring(exit_code), correlation_id)
+            CommandExecutor.on_aider_exit(exit_code)
+        end,
+    })
 
-    if not ok then
-        Logger.error("Failed to start Aider job: " .. tostring(result), correlation_id)
+    if job_id <= 0 then
+        Logger.error("Failed to start Aider job. Job ID: " .. tostring(job_id), correlation_id)
         return
     end
 
-    aider_job_id = result
-
-    if aider_job_id <= 0 then
-        Logger.error("Failed to start Aider job. Job ID: " .. tostring(aider_job_id), correlation_id)
-        return
-    end
-
+    aider_job_id = job_id
     Logger.debug("Aider job started with job_id: " .. tostring(aider_job_id), correlation_id)
 
     aider_buf = buf
     ContextManager.update(context_buffers)
     Logger.debug("Context updated", correlation_id)
-
-    -- Enter insert mode to allow immediate input
-    vim.cmd('startinsert')
-    Logger.debug("Entered insert mode", correlation_id)
 
     Logger.info("Aider started successfully", correlation_id)
 end
