@@ -89,9 +89,10 @@ function CommandExecutor.execute_commands(commands)
     Logger.debug("execute_commands: Starting command execution", correlation_id)
     
     if aider_job_id and aider_job_id > 0 then
-        local command_string = table.concat(commands, "\n") .. "\n"
-        Logger.debug("Sending commands: " .. vim.inspect(command_string), correlation_id)
-        vim.api.nvim_chan_send(aider_job_id, command_string)
+        for _, command in ipairs(commands) do
+            Logger.debug("Sending command: " .. vim.inspect(command), correlation_id)
+            vim.api.nvim_chan_send(aider_job_id, command .. "\n")
+        end
         Logger.debug("Commands sent successfully", correlation_id)
     else
         Logger.warn("Aider job is not running, commands not sent", correlation_id)
