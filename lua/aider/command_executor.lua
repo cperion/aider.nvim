@@ -23,60 +23,29 @@ function CommandExecutor.start_aider(buf, args)
     Logger.debug("start_aider: Context buffers: " .. vim.inspect(context_buffers), correlation_id)
 
     -- Construct the command
-    local command = {"aider"}
-    if args ~= "" then
-        for arg in args:gmatch("%S+") do
-            table.insert(command, arg)
-        end
-    end
-    for _, file in ipairs(context_buffers) do
-        table.insert(command, file)
-    end
+    local command = "aider " .. args
+    command = CommandExecutor.add_buffers_to_command(command, context_buffers)
 
     Logger.info("Starting Aider", correlation_id)
-    Logger.debug("Command: " .. vim.inspect(command), correlation_id)
+    Logger.debug("Command: " .. command, correlation_id)
 
-    -- Ensure the buffer is modifiable and clear it
-    vim.api.nvim_buf_set_option(buf, 'modifiable', true)
-    vim.api.nvim_buf_set_lines(buf, 0, -1, false, {})
-    Logger.debug("Buffer cleared and set to modifiable", correlation_id)
-
-    -- Set buffer-specific options before starting the job
-    vim.api.nvim_buf_set_option(buf, 'buftype', 'nofile')
+    -- Ensure the buffer is a terminal buffer
+    vim.api.nvim_buf_set_option(buf, 'buftype', 'terminal')
     vim.api.nvim_buf_set_option(buf, 'swapfile', false)
     vim.api.nvim_buf_set_name(buf, "Aider")
-    Logger.debug("Buffer options set", correlation_id)
 
-    -- Start the job using vim.fn.jobstart
-    local job_id = vim.fn.jobstart(command, {
-        stdout_buffered = true,
-        stderr_buffered = true,
-        on_stdout = function(_, data)
-            vim.schedule(function()
-                if buf and vim.api.nvim_buf_is_valid(buf) then
-                    vim.api.nvim_buf_set_lines(buf, -1, -1, false, data)
-                end
-            end)
-        end,
-        on_stderr = function(_, data)
-            vim.schedule(function()
-                if buf and vim.api.nvim_buf_is_valid(buf) then
-                    vim.api.nvim_buf_set_lines(buf, -1, -1, false, data)
-                end
-            end)
-        end,
-        on_exit = function(_, exit_code)
-            Logger.debug("Aider job exited with code: " .. tostring(exit_code), correlation_id)
+    -- Start the job using vim.fn.termopen
+    aider_job_id = vim.fn.termopen(command, {
+        on_exit = function(job_id, exit_code, event_type)
             CommandExecutor.on_aider_exit(exit_code)
         end,
     })
 
-    if job_id <= 0 then
-        Logger.error("Failed to start Aider job. Job ID: " .. tostring(job_id), correlation_id)
+    if aider_job_id <= 0 then
+        Logger.error("Failed to start Aider job. Job ID: " .. tostring(aider_job_id), correlation_id)
         return
     end
 
-    aider_job_id = job_id
     Logger.debug("Aider job started with job_id: " .. tostring(aider_job_id), correlation_id)
 
     aider_buf = buf
@@ -84,6 +53,13 @@ function CommandExecutor.start_aider(buf, args)
     Logger.debug("Context updated", correlation_id)
 
     Logger.info("Aider started successfully", correlation_id)
+end
+
+function CommandExecutor.add_buffers_to_command(command, buffers)
+    for _, file in ipairs(buffers) do
+        command = command .. " " .. vim.fn.shellescape(file)
+    end
+    return command
 end
 
 -- Function removed as it's no longer needed with termopen
