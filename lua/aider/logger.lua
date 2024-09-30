@@ -14,44 +14,39 @@ local current_log_level = log_levels.INFO
 local log_file = nil
 
 local function get_plugin_directory()
-    local source = debug.getinfo(1, "S").source
-    local file = string.sub(source, 2)  -- Remove the '@' at the beginning
-    return Path:new(file):parent():parent():parent()
+	local source = debug.getinfo(1, "S").source
+	local file = string.sub(source, 2) -- Remove the '@' at the beginning
+	return Path:new(file):parent():parent():parent()
 end
 
 function Logger.setup()
-    current_log_level = log_levels[config.get("log_level")] or log_levels.DEBUG  -- Set to DEBUG by default
-    
-    local plugin_dir = get_plugin_directory()
-    local log_path = plugin_dir / "aider.log"
-    
-    log_file = io.open(log_path.filename, "w")
-    if not log_file then
-        vim.notify("Failed to open log file: " .. log_path.filename, vim.log.levels.ERROR)
-    else
-        vim.notify("Aider log file: " .. log_path.filename, vim.log.levels.INFO)
-    end
-    
-    Logger.debug("Logger setup complete")
+	current_log_level = log_levels[config.get("log_level")] or log_levels.DEBUG -- Set to DEBUG by default
+
+	local plugin_dir = get_plugin_directory()
+	local log_path = plugin_dir / "aider.log"
+
+	log_file = io.open(log_path.filename, "w")
+	if not log_file then
+		vim.notify("Failed to open log file: " .. log_path.filename, vim.log.levels.ERROR)
+	else
+		vim.notify("Aider log file: " .. log_path.filename, vim.log.levels.INFO)
+	end
+
+	Logger.debug("Logger setup complete")
 end
 
 local function log(level, message, correlation_id)
-  if log_levels[level] >= current_log_level then
-    local log_message = string.format(
-      "[%s] %s: %s",
-      os.date("%Y-%m-%d %H:%M:%S"),
-      level,
-      tostring(message)
-    )
-    if correlation_id then
-      log_message = log_message .. " [CorrelationID: " .. tostring(correlation_id) .. "]"
-    end
-    vim.notify(log_message, vim.log.levels[level])
-    if log_file then
-      log_file:write(log_message .. "\n")
-      log_file:flush()
-    end
-  end
+	if log_levels[level] >= current_log_level then
+		local log_message = string.format("[%s] %s: %s", os.date("%Y-%m-%d %H:%M:%S"), level, tostring(message))
+		if correlation_id then
+			log_message = log_message .. " [CorrelationID: " .. tostring(correlation_id) .. "]"
+		end
+		vim.notify(log_message, vim.log.levels[level])
+		if log_file then
+			log_file:write(log_message .. "\n")
+			log_file:flush()
+		end
+	end
 end
 
 function Logger.debug(message, correlation_id)

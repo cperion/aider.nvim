@@ -4,31 +4,31 @@ local aider_buf = nil
 local aider_context = {}
 
 function BufferManager.setup()
-    BufferManager.update_context()
-    aider_buf = BufferManager.get_or_create_aider_buffer()
-    
-    -- Set up autocommands for buffer events
-    vim.api.nvim_create_autocmd({"BufAdd", "BufDelete"}, {
-        callback = function()
-            vim.schedule(BufferManager.update_context)
-        end
-    })
+	BufferManager.update_context()
+	aider_buf = BufferManager.get_or_create_aider_buffer()
+
+	-- Set up autocommands for buffer events
+	vim.api.nvim_create_autocmd({ "BufAdd", "BufDelete" }, {
+		callback = function()
+			vim.schedule(BufferManager.update_context)
+		end,
+	})
 end
 
 function BufferManager.get_valid_buffers()
-    local valid_buffers = {}
-    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-        if BufferManager.should_include_in_context(buf) then
-            local bufname = vim.api.nvim_buf_get_name(buf)
-            table.insert(valid_buffers, {
-                id = buf,
-                name = bufname,
-                filetype = vim.api.nvim_get_option_value("filetype", { buf = buf }),
-                modified = vim.api.nvim_get_option_value("modified", { buf = buf })
-            })
-        end
-    end
-    return valid_buffers
+	local valid_buffers = {}
+	for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+		if BufferManager.should_include_in_context(buf) then
+			local bufname = vim.api.nvim_buf_get_name(buf)
+			table.insert(valid_buffers, {
+				id = buf,
+				name = bufname,
+				filetype = vim.api.nvim_get_option_value("filetype", { buf = buf }),
+				modified = vim.api.nvim_get_option_value("modified", { buf = buf }),
+			})
+		end
+	end
+	return valid_buffers
 end
 
 function BufferManager.get_or_create_aider_buffer()
@@ -41,10 +41,10 @@ function BufferManager.get_or_create_aider_buffer()
 			return nil
 		end
 		vim.api.nvim_buf_set_name(aider_buf, "Aider")
-		vim.api.nvim_set_option_value("buftype", "nofile", {buf = aider_buf})
-		vim.api.nvim_set_option_value("bufhidden", "hide", {buf = aider_buf})
-		vim.api.nvim_set_option_value("swapfile", false, {buf = aider_buf})
-		vim.api.nvim_set_option_value("buflisted", false, {buf = aider_buf})
+		vim.api.nvim_set_option_value("buftype", "nofile", { buf = aider_buf })
+		vim.api.nvim_set_option_value("bufhidden", "hide", { buf = aider_buf })
+		vim.api.nvim_set_option_value("swapfile", false, { buf = aider_buf })
+		vim.api.nvim_set_option_value("buflisted", false, { buf = aider_buf })
 		return aider_buf
 	end
 end
@@ -58,50 +58,50 @@ function BufferManager.is_aider_buffer(buf)
 end
 
 function BufferManager.get_context_buffers()
-    local context_buffers = {}
-    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-        if BufferManager.should_include_in_context(buf) then
-            table.insert(context_buffers, vim.api.nvim_buf_get_name(buf))
-        end
-    end
-    return context_buffers
+	local context_buffers = {}
+	for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+		if BufferManager.should_include_in_context(buf) then
+			table.insert(context_buffers, vim.api.nvim_buf_get_name(buf))
+		end
+	end
+	return context_buffers
 end
 
 function BufferManager.should_include_in_context(buf)
-    local bufname = vim.api.nvim_buf_get_name(buf)
-    local buftype = vim.api.nvim_get_option_value("buftype", { buf = buf })
-    return bufname ~= "" 
-        and not bufname:match("^term://") 
-        and buftype ~= "terminal" 
-        and not BufferManager.is_aider_buffer(buf)
+	local bufname = vim.api.nvim_buf_get_name(buf)
+	local buftype = vim.api.nvim_get_option_value("buftype", { buf = buf })
+	return bufname ~= ""
+		and not bufname:match("^term://")
+		and buftype ~= "terminal"
+		and not BufferManager.is_aider_buffer(buf)
 end
 
 function BufferManager.update_context()
-    local correlation_id = Logger.generate_correlation_id()
-    Logger.debug("Updating context", correlation_id)
-    local start_time = os.clock() * 1000
-    
-    local valid_buffers = BufferManager.get_valid_buffers()
-    Logger.debug("Current valid buffers: " .. vim.inspect(valid_buffers), correlation_id)
-    
-    local new_context = BufferManager.get_context_buffers()
-    Logger.debug("Current context: " .. vim.inspect(aider_context), correlation_id)
-    Logger.debug("New context: " .. vim.inspect(new_context), correlation_id)
-    
-    if not vim.deep_equal(aider_context, new_context) then
-        Logger.debug("Context changed, updating Aider", correlation_id)
-        aider_context = new_context
-        require("aider.context_manager").update(new_context)
-        local commands = require("aider.context_manager").get_batched_commands()
-        if #commands > 0 then
-            require("aider.command_executor").queue_commands(commands)
-        end
-    else
-        Logger.debug("Context unchanged, no update needed", correlation_id)
-    end
-    
-    local end_time = os.clock() * 1000
-    Logger.debug(string.format("Context update operation took %.3f ms", (end_time - start_time)), correlation_id)
+	local correlation_id = Logger.generate_correlation_id()
+	Logger.debug("Updating context", correlation_id)
+	local start_time = os.clock() * 1000
+
+	local valid_buffers = BufferManager.get_valid_buffers()
+	Logger.debug("Current valid buffers: " .. vim.inspect(valid_buffers), correlation_id)
+
+	local new_context = BufferManager.get_context_buffers()
+	Logger.debug("Current context: " .. vim.inspect(aider_context), correlation_id)
+	Logger.debug("New context: " .. vim.inspect(new_context), correlation_id)
+
+	if not vim.deep_equal(aider_context, new_context) then
+		Logger.debug("Context changed, updating Aider", correlation_id)
+		aider_context = new_context
+		require("aider.context_manager").update(new_context)
+		local commands = require("aider.context_manager").get_batched_commands()
+		if #commands > 0 then
+			require("aider.command_executor").queue_commands(commands)
+		end
+	else
+		Logger.debug("Context unchanged, no update needed", correlation_id)
+	end
+
+	local end_time = os.clock() * 1000
+	Logger.debug(string.format("Context update operation took %.3f ms", (end_time - start_time)), correlation_id)
 end
 
 function BufferManager.get_aider_context()
