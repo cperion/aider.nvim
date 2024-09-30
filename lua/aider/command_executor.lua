@@ -11,7 +11,7 @@ local is_executing = false
 local function find_prompt_line(buf)
     local lines = vim.api.nvim_buf_get_lines(buf, -10, -1, false)
     for i = #lines, 1, -1 do
-        if lines[i]:match("> %s*$") then
+        if lines[i]:match("%w*>%s*$") then
             return -#lines + i - 1
         end
     end
