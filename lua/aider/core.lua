@@ -60,7 +60,7 @@ function Aider.toggle(args, layout)
 		-- Start the Aider job if it's not already running
 		if not CommandExecutor.is_aider_running() then
 			local aider_args = args or config.get("aider_args") or ""
-			CommandExecutor.start_aider(buf, aider_args)
+			CommandExecutor.start_aider(buf, aider_args, {})  -- Pass an empty table as initial_context
 			Logger.debug("Aider started with args: " .. aider_args, correlation_id)
 		end
 	end

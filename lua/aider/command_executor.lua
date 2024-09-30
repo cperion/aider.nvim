@@ -40,6 +40,7 @@ end
 function M.start_aider(buf, args, initial_context)
     local correlation_id = Logger.generate_correlation_id()
     args = args or ""
+    initial_context = initial_context or {}  -- Add this line to provide a default empty table
 
     Logger.debug("start_aider: Starting with buffer " .. tostring(buf) .. " and args: " .. args, correlation_id)
     Logger.debug("start_aider: Initial context: " .. vim.inspect(initial_context), correlation_id)
