@@ -29,12 +29,12 @@ function ContextManager.get_batched_commands()
     local commands = {}
 
     if #files_to_add > 0 then
-        local add_command = "/add " .. table.concat(vim.tbl_map(vim.fn.shellescape, files_to_add), " ")
+        local add_command = "/add " .. table.concat(files_to_add, " ")
         table.insert(commands, add_command)
     end
 
     if #files_to_drop > 0 then
-        local drop_command = "/drop " .. table.concat(vim.tbl_map(vim.fn.shellescape, files_to_drop), " ")
+        local drop_command = "/drop " .. table.concat(files_to_drop, " ")
         table.insert(commands, drop_command)
     end
 
