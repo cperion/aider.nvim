@@ -3,15 +3,15 @@ local ContextManager = require("aider.context_manager")
 local Logger = require("aider.logger")
 
 local CommandExecutor = {}
-local aider_job_id = nil
 local aider_buf = nil
+CommandExecutor.aider_job_id = nil
 
 function CommandExecutor.setup()
     -- No setup needed for now
 end
 
 function CommandExecutor.is_aider_running()
-    return aider_job_id ~= nil and aider_job_id > 0
+    return CommandExecutor.aider_job_id ~= nil and CommandExecutor.aider_job_id > 0
 end
 
 function CommandExecutor.start_aider(buf, args)
@@ -30,18 +30,18 @@ function CommandExecutor.start_aider(buf, args)
     Logger.debug("Command: " .. command, correlation_id)
 
     -- Start the job using vim.fn.termopen
-    aider_job_id = vim.fn.termopen(command, {
+    CommandExecutor.aider_job_id = vim.fn.termopen(command, {
         on_exit = function(job_id, exit_code, event_type)
             CommandExecutor.on_aider_exit(exit_code)
         end,
     })
 
-    if aider_job_id <= 0 then
-        Logger.error("Failed to start Aider job. Job ID: " .. tostring(aider_job_id), correlation_id)
+    if CommandExecutor.aider_job_id <= 0 then
+        Logger.error("Failed to start Aider job. Job ID: " .. tostring(CommandExecutor.aider_job_id), correlation_id)
         return
     end
 
-    Logger.debug("Aider job started with job_id: " .. tostring(aider_job_id), correlation_id)
+    Logger.debug("Aider job started with job_id: " .. tostring(CommandExecutor.aider_job_id), correlation_id)
 
     aider_buf = buf
     ContextManager.update(context_buffers)
@@ -88,10 +88,10 @@ function CommandExecutor.execute_commands(commands)
     local correlation_id = Logger.generate_correlation_id()
     Logger.debug("execute_commands: Starting command execution", correlation_id)
     
-    if aider_job_id and aider_job_id > 0 then
+    if CommandExecutor.aider_job_id and CommandExecutor.aider_job_id > 0 then
         for _, command in ipairs(commands) do
             Logger.debug("Sending command: " .. vim.inspect(command), correlation_id)
-            vim.api.nvim_chan_send(aider_job_id, command .. "\n")
+            vim.api.nvim_chan_send(CommandExecutor.aider_job_id, command .. "\n")
         end
         Logger.debug("Commands sent successfully", correlation_id)
     else
@@ -102,7 +102,7 @@ function CommandExecutor.execute_commands(commands)
 end
 
 function CommandExecutor.on_aider_exit(exit_code)
-    aider_job_id = nil
+    CommandExecutor.aider_job_id = nil
     aider_buf = nil
     ContextManager.update({})
     vim.schedule(function()
