@@ -10,9 +10,6 @@ local current_layout = "vsplit"
 
 function Aider.setup()
     Logger.debug("Aider.setup: Starting Aider setup")
-    Logger.setup()
-    Logger.debug("Aider.setup: Logger setup complete")
-    Logger.debug("Aider.setup: User config: " .. vim.inspect(config.get_all()))
     WindowManager.setup()
     Logger.debug("Aider.setup: WindowManager setup complete")
     BufferManager.setup()
