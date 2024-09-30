@@ -1,0 +1,46 @@
+[2024-09-30 09:21:08] DEBUG: Logger setup complete
+[2024-09-30 09:21:08] DEBUG: Aider.setup: Logger setup complete
+[2024-09-30 09:21:08] DEBUG: Aider.setup: User config: {
+  auto_manage_context = true,
+  default_layout = "vsplit",
+  keys = {
+    background = "<leader>ab",
+    open = "<leader>ao",
+    toggle = "<leader>at"
+  },
+  log_level = 2,
+  max_buffer_size = 1000000,
+  update_debounce_ms = 500
+}
+[2024-09-30 09:21:08] DEBUG: Aider.setup: WindowManager setup complete
+[2024-09-30 09:21:08] DEBUG: Updating context [CorrelationID: cb511a84]
+[2024-09-30 09:21:08] DEBUG: Current context: {} [CorrelationID: cb511a84]
+[2024-09-30 09:21:08] DEBUG: New context: { "/home/cperion_ext/dev/aider.nvim/aider.log" } [CorrelationID: cb511a84]
+[2024-09-30 09:21:08] INFO: Context changed, updating Aider [CorrelationID: cb511a84]
+[2024-09-30 09:21:08] DEBUG: update_aider_context: Starting context update [CorrelationID: b2e7fec4]
+[2024-09-30 09:21:08] WARN: Aider job is not running, context update skipped [CorrelationID: b2e7fec4]
+[2024-09-30 09:21:08] DEBUG: update_aider_context: Context update finished [CorrelationID: b2e7fec4]
+[2024-09-30 09:21:08] DEBUG: Context update operation took 2.522 ms [CorrelationID: cb511a84]
+[2024-09-30 09:21:08] DEBUG: Aider.setup: BufferManager setup complete
+[2024-09-30 09:21:08] DEBUG: Aider.setup: CommandExecutor setup complete
+[2024-09-30 09:21:08] DEBUG: Aider.setup: Autocommands setup complete
+[2024-09-30 09:21:08] DEBUG: Aider.setup: Keybindings setup complete
+[2024-09-30 09:21:08] DEBUG: Aider.setup: Aider setup complete
+[2024-09-30 09:21:08] DEBUG: Aider core setup complete
+[2024-09-30 09:21:08] DEBUG: VimLeavePre autocmd created
+[2024-09-30 09:21:08] DEBUG: Aider setup finished
+[2024-09-30 09:21:08] DEBUG: Toggling Aider window. Current state: closed [CorrelationID: 971109ef]
+[2024-09-30 09:21:08] DEBUG: Updating context [CorrelationID: c0d39733]
+[2024-09-30 09:21:08] DEBUG: Current context: { "/home/cperion_ext/dev/aider.nvim/aider.log" } [CorrelationID: c0d39733]
+[2024-09-30 09:21:08] DEBUG: New context: { "/home/cperion_ext/dev/aider.nvim/aider.log" } [CorrelationID: c0d39733]
+[2024-09-30 09:21:08] DEBUG: Context unchanged, no update needed [CorrelationID: c0d39733]
+[2024-09-30 09:21:08] DEBUG: Context update operation took 0.353 ms [CorrelationID: c0d39733]
+[2024-09-30 09:21:08] DEBUG: update_aider_context: Starting context update [CorrelationID: 14ba882b]
+[2024-09-30 09:21:08] WARN: Aider job is not running, context update skipped [CorrelationID: 14ba882b]
+[2024-09-30 09:21:08] DEBUG: update_aider_context: Context update finished [CorrelationID: 14ba882b]
+[2024-09-30 09:21:08] DEBUG: Aider window created successfully: 1003
+[2024-09-30 09:21:08] DEBUG: start_aider: Starting with buffer 5 and args:  [CorrelationID: a93e5239]
+[2024-09-30 09:21:08] DEBUG: start_aider: Context buffers: { "/home/cperion_ext/dev/aider.nvim/aider.log" } [CorrelationID: a93e5239]
+[2024-09-30 09:21:08] INFO: Starting Aider [CorrelationID: a93e5239]
+[2024-09-30 09:21:08] DEBUG: Command: { "aider", "/home/cperion_ext/dev/aider.nvim/aider.log" } [CorrelationID: a93e5239]
+[2024-09-30 09:21:08] DEBUG: Buffer cleared and set to modifiable [CorrelationID: a93e5239]
