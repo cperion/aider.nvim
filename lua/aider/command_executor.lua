@@ -8,42 +8,9 @@ M.aider_job_id = nil
 local command_queue = {}
 local is_executing = false
 
-local function find_prompt_line(buf)
-    local lines = vim.api.nvim_buf_get_lines(buf, -20, -1, false)
-    for i = #lines, 1, -1 do
-        if lines[i]:match("^%s*%w*>%s*$") then
-            return -#lines + i - 1
-        end
-    end
-    return -1
-end
-
-local function get_current_input(buf)
-    local prompt_line = find_prompt_line(buf)
-    if prompt_line == -1 then
-        return nil
-    end
+local function append_commands(buf, commands)
+    local line_count = vim.api.nvim_buf_line_count(buf)
     
-    local line_count = vim.api.nvim_buf_line_count(buf)
-    local input_lines = vim.api.nvim_buf_get_lines(buf, prompt_line + 1, line_count, false)
-    return table.concat(input_lines, "\n")
-end
-
-local function insert_commands_at_prompt(buf, commands)
-    local prompt_line = find_prompt_line(buf)
-    if prompt_line == -1 then
-        Logger.warn("Couldn't find prompt line in Aider buffer")
-        return false
-    end
-
-    local current_input = get_current_input(buf)
-    local line_count = vim.api.nvim_buf_line_count(buf)
-
-    -- Clear existing input
-    if current_input and #current_input > 0 then
-        vim.api.nvim_buf_set_lines(buf, prompt_line + 1, line_count, false, {})
-    end
-
     -- Insert new commands
     for _, cmd in ipairs(commands) do
         vim.api.nvim_buf_set_lines(buf, -1, -1, false, {cmd})
@@ -131,10 +98,10 @@ function M.update_aider_context()
         Logger.debug("Generated commands: " .. vim.inspect(commands), correlation_id)
 
         if #commands > 0 then
-            M.queue_commands(commands)
-            Logger.debug("Commands queued", correlation_id)
+            M.queue_commands(commands, true)  -- Set is_context_update to true
+            Logger.debug("Context update commands queued", correlation_id)
         else
-            Logger.debug("No commands to execute", correlation_id)
+            Logger.debug("No context update commands to execute", correlation_id)
         end
     else
         Logger.warn("Aider job is not running, context update skipped", correlation_id)
@@ -143,12 +110,12 @@ function M.update_aider_context()
     Logger.debug("update_aider_context: Context update finished", correlation_id)
 end
 
-function M.queue_commands(commands)
+function M.queue_commands(commands, is_context_update)
     for _, command in ipairs(commands) do
         if not command:match("^/") then
             command = "/" .. command
         end
-        table.insert(command_queue, command)
+        table.insert(command_queue, {cmd = command, is_context_update = is_context_update})
     end
     M.process_command_queue()
 end
@@ -159,13 +126,29 @@ function M.process_command_queue()
     end
 
     is_executing = true
-    local commands_to_send = vim.deepcopy(command_queue)
+    local commands_to_send = {}
+    local context_update_commands = {}
+
+    -- Separate context update commands from user commands
+    for _, cmd_data in ipairs(command_queue) do
+        if cmd_data.is_context_update then
+            table.insert(context_update_commands, cmd_data.cmd)
+        else
+            table.insert(commands_to_send, cmd_data.cmd)
+        end
+    end
     command_queue = {}
 
-    if insert_commands_at_prompt(aider_buf, commands_to_send) then
-        Logger.debug("Commands inserted and executed in Aider buffer: " .. vim.inspect(commands_to_send))
-    else
-        Logger.warn("Failed to insert and execute commands in Aider buffer")
+    -- Process context update commands first
+    if #context_update_commands > 0 then
+        append_commands(aider_buf, context_update_commands)
+        Logger.debug("Context update commands executed in Aider buffer: " .. vim.inspect(context_update_commands))
+    end
+
+    -- Process user commands
+    if #commands_to_send > 0 then
+        append_commands(aider_buf, commands_to_send)
+        Logger.debug("User commands executed in Aider buffer: " .. vim.inspect(commands_to_send))
     end
 
     -- Wait for a short time before processing the next batch of commands
@@ -187,7 +170,7 @@ function M.on_buffer_open(bufnr)
     end
     
     local relative_filename = vim.fn.fnamemodify(bufname, ":~:.")
-    M.queue_commands({"/add " .. relative_filename})
+    M.queue_commands({"/add " .. relative_filename}, true)  -- Set is_context_update to true
     
     Logger.debug("Buffer opened: " .. relative_filename)
 end
@@ -203,7 +186,7 @@ function M.on_buffer_close(bufnr)
     end
     
     local relative_filename = vim.fn.fnamemodify(bufname, ":~:.")
-    M.queue_commands({"/drop " .. relative_filename})
+    M.queue_commands({"/drop " .. relative_filename}, true)  -- Set is_context_update to true
     
     Logger.debug("Buffer closed: " .. relative_filename)
 end
