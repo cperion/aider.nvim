@@ -1,4 +1,5 @@
 local Logger = require("aider.logger")
+local BufferManager = require("aider.buffer_manager")
 local ContextManager = {}
 
 local current_context = {}
@@ -7,6 +8,11 @@ local previous_context = {}
 function ContextManager.update(new_context)
     local correlation_id = Logger.generate_correlation_id()
     Logger.debug("ContextManager.update: Starting context update", correlation_id)
+    
+    -- Log current valid buffers
+    local valid_buffers = BufferManager.get_valid_buffers()
+    Logger.debug("Current valid buffers: " .. vim.inspect(valid_buffers), correlation_id)
+    
     Logger.debug("Previous context: " .. vim.inspect(previous_context), correlation_id)
     Logger.debug("Current context: " .. vim.inspect(current_context), correlation_id)
     Logger.debug("New context: " .. vim.inspect(new_context), correlation_id)
