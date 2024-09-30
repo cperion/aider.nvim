@@ -42,6 +42,7 @@ function CommandExecutor.start_aider(buf, args)
     end
 
     Logger.debug("Aider job started with job_id: " .. tostring(CommandExecutor.aider_job_id), correlation_id)
+    Logger.debug("Aider job_id after starting: " .. tostring(CommandExecutor.aider_job_id), correlation_id)
 
     aider_buf = buf
     ContextManager.update(context_buffers)
@@ -57,13 +58,11 @@ function CommandExecutor.add_buffers_to_command(command, buffers)
     return command
 end
 
--- Function removed as it's no longer needed with termopen
-
 function CommandExecutor.update_aider_context()
     local correlation_id = Logger.generate_correlation_id()
     Logger.debug("update_aider_context: Starting context update", correlation_id)
     
-    if aider_job_id and aider_job_id > 0 then
+    if CommandExecutor.aider_job_id and CommandExecutor.aider_job_id > 0 then
         local new_context = BufferManager.get_aider_context()
         local commands = ContextManager.get_batched_commands()
 
