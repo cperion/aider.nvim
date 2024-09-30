@@ -9,8 +9,11 @@ function BufferManager.setup()
 
 	-- Set up autocommands for buffer events
 	vim.api.nvim_create_autocmd({ "BufAdd", "BufDelete" }, {
-		callback = function()
-			vim.schedule(BufferManager.update_context)
+		callback = function(ev)
+			-- Check if the buffer is valid and should be included in the context
+			if BufferManager.should_include_in_context(ev.buf) then
+				vim.schedule(BufferManager.update_context)
+			end
 		end,
 	})
 end
