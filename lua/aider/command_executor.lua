@@ -2,19 +2,29 @@ local BufferManager = require("aider.buffer_manager")
 local ContextManager = require("aider.context_manager")
 local Logger = require("aider.logger")
 
-local CommandExecutor = {}
+local M = {}
 local aider_buf = nil
-CommandExecutor.aider_job_id = nil
+M.aider_job_id = nil
 
-function CommandExecutor.setup()
-    -- No setup needed for now
+function M.setup()
+    vim.api.nvim_create_autocmd("BufReadPost", {
+        callback = function(args)
+            M.on_buffer_open(args.buf)
+        end,
+    })
+    
+    vim.api.nvim_create_autocmd("BufDelete", {
+        callback = function(args)
+            M.on_buffer_close(args.buf)
+        end,
+    })
 end
 
 function CommandExecutor.is_aider_running()
     return CommandExecutor.aider_job_id ~= nil and CommandExecutor.aider_job_id > 0
 end
 
-function CommandExecutor.start_aider(buf, args)
+function M.start_aider(buf, args)
     local correlation_id = Logger.generate_correlation_id()
     args = args or ""
     local context_buffers = BufferManager.get_aider_context()
@@ -24,25 +34,25 @@ function CommandExecutor.start_aider(buf, args)
 
     -- Construct the command
     local command = "aider " .. args
-    command = CommandExecutor.add_buffers_to_command(command, context_buffers)
+    command = M.add_buffers_to_command(command, context_buffers)
 
     Logger.info("Starting Aider", correlation_id)
     Logger.debug("Command: " .. command, correlation_id)
 
     -- Start the job using vim.fn.termopen
-    CommandExecutor.aider_job_id = vim.fn.termopen(command, {
+    M.aider_job_id = vim.fn.termopen(command, {
         on_exit = function(job_id, exit_code, event_type)
-            CommandExecutor.on_aider_exit(exit_code)
+            M.on_aider_exit(exit_code)
         end,
     })
 
-    if CommandExecutor.aider_job_id <= 0 then
-        Logger.error("Failed to start Aider job. Job ID: " .. tostring(CommandExecutor.aider_job_id), correlation_id)
+    if M.aider_job_id <= 0 then
+        Logger.error("Failed to start Aider job. Job ID: " .. tostring(M.aider_job_id), correlation_id)
         return
     end
 
-    Logger.debug("Aider job started with job_id: " .. tostring(CommandExecutor.aider_job_id), correlation_id)
-    Logger.debug("Aider job_id after starting: " .. tostring(CommandExecutor.aider_job_id), correlation_id)
+    Logger.debug("Aider job started with job_id: " .. tostring(M.aider_job_id), correlation_id)
+    Logger.debug("Aider job_id after starting: " .. tostring(M.aider_job_id), correlation_id)
 
     aider_buf = buf
     ContextManager.update(context_buffers)
@@ -83,14 +93,14 @@ function CommandExecutor.update_aider_context()
     Logger.debug("update_aider_context: Context update finished", correlation_id)
 end
 
-function CommandExecutor.execute_commands(commands)
+function M.execute_commands(commands)
     local correlation_id = Logger.generate_correlation_id()
     Logger.debug("execute_commands: Starting command execution", correlation_id)
     
-    if CommandExecutor.aider_job_id and CommandExecutor.aider_job_id > 0 then
+    if M.aider_job_id and M.aider_job_id > 0 then
         for _, command in ipairs(commands) do
             Logger.debug("Sending command: " .. vim.inspect(command), correlation_id)
-            vim.api.nvim_chan_send(CommandExecutor.aider_job_id, command .. "\n")
+            vim.fn.chansend(M.aider_job_id, command .. "\n")
         end
         Logger.debug("Commands sent successfully", correlation_id)
     else
@@ -100,8 +110,43 @@ function CommandExecutor.execute_commands(commands)
     Logger.debug("execute_commands: Command execution finished", correlation_id)
 end
 
-function CommandExecutor.on_aider_exit(exit_code)
-    CommandExecutor.aider_job_id = nil
+function M.on_buffer_open(bufnr)
+    if not M.aider_job_id or M.aider_job_id <= 0 then
+        return
+    end
+    
+    local bufname = vim.api.nvim_buf_get_name(bufnr)
+    local buftype = vim.api.nvim_buf_get_option(bufnr, 'buftype')
+    if not bufname or bufname:match("^term://") or buftype == "terminal" then
+        return
+    end
+    
+    local relative_filename = vim.fn.fnamemodify(bufname, ":~:.")
+    local line_to_add = "/add " .. relative_filename
+    vim.fn.chansend(M.aider_job_id, line_to_add .. "\n")
+    
+    Logger.debug("Buffer opened: " .. relative_filename)
+end
+
+function M.on_buffer_close(bufnr)
+    if not M.aider_job_id or M.aider_job_id <= 0 then
+        return
+    end
+    
+    local bufname = vim.api.nvim_buf_get_name(bufnr)
+    if not bufname or bufname:match("^term://") then
+        return
+    end
+    
+    local relative_filename = vim.fn.fnamemodify(bufname, ":~:.")
+    local line_to_drop = "/drop " .. relative_filename
+    vim.fn.chansend(M.aider_job_id, line_to_drop .. "\n")
+    
+    Logger.debug("Buffer closed: " .. relative_filename)
+end
+
+function M.on_aider_exit(exit_code)
+    M.aider_job_id = nil
     aider_buf = nil
     ContextManager.update({})
     vim.schedule(function()
@@ -113,4 +158,4 @@ function CommandExecutor.on_aider_exit(exit_code)
     end)
 end
 
-return CommandExecutor
+return M
