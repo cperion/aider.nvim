@@ -4,8 +4,15 @@ local aider_buf = nil
 local aider_context = {}
 
 function BufferManager.setup()
-	BufferManager.update_context()
-	aider_buf = BufferManager.get_or_create_aider_buffer()
+    BufferManager.update_context()
+    aider_buf = BufferManager.get_or_create_aider_buffer()
+    
+    -- Set up autocommands for buffer events
+    vim.api.nvim_create_autocmd({"BufAdd", "BufDelete"}, {
+        callback = function()
+            vim.schedule(BufferManager.update_context)
+        end
+    })
 end
 
 function BufferManager.get_valid_buffers()
@@ -74,20 +81,25 @@ function BufferManager.update_context()
     Logger.debug("Updating context", correlation_id)
     local start_time = os.clock() * 1000
     
-    -- Log valid buffers
     local valid_buffers = BufferManager.get_valid_buffers()
     Logger.debug("Current valid buffers: " .. vim.inspect(valid_buffers), correlation_id)
     
     local new_context = BufferManager.get_context_buffers()
     Logger.debug("Current context: " .. vim.inspect(aider_context), correlation_id)
     Logger.debug("New context: " .. vim.inspect(new_context), correlation_id)
+    
     if not vim.deep_equal(aider_context, new_context) then
         Logger.debug("Context changed, updating Aider", correlation_id)
         aider_context = new_context
-        require("aider.command_executor").update_aider_context()
+        require("aider.context_manager").update(new_context)
+        local commands = require("aider.context_manager").get_batched_commands()
+        if #commands > 0 then
+            require("aider.command_executor").queue_commands(commands)
+        end
     else
         Logger.debug("Context unchanged, no update needed", correlation_id)
     end
+    
     local end_time = os.clock() * 1000
     Logger.debug(string.format("Context update operation took %.3f ms", (end_time - start_time)), correlation_id)
 end
