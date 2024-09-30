@@ -81,28 +81,25 @@ function ContextManager.mass_sync_context()
     local correlation_id = Logger.generate_correlation_id()
     Logger.debug("ContextManager.mass_sync_context: Starting mass context sync", correlation_id)
 
-    -- Drop all files
-    local drop_command = "/drop *"
-    local commands = {drop_command}
+    local inputs = {"/drop *"}
 
     -- Add all current buffers
     local current_buffers = BufferManager.get_context_buffers()
     if #current_buffers > 0 then
-        local add_command = "/add " .. table.concat(current_buffers, " ")
-        table.insert(commands, add_command)
+        table.insert(inputs, "/add " .. table.concat(current_buffers, " "))
     end
 
     -- Add a final carriage return
-    table.insert(commands, "")
+    table.insert(inputs, "\n")
 
     -- Update the current context
     current_context = current_buffers
     pending_changes = {add = {}, drop = {}}
 
-    Logger.debug("Mass sync commands: " .. vim.inspect(commands), correlation_id)
+    Logger.debug("Mass sync inputs: " .. vim.inspect(inputs), correlation_id)
     Logger.debug("ContextManager.mass_sync_context: Mass context sync complete", correlation_id)
 
-    return commands
+    return inputs
 end
 
 return ContextManager

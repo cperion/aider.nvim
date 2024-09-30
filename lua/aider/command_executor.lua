@@ -91,12 +91,9 @@ function M.update_aider_context()
     Logger.debug("update_aider_context: Context update finished", correlation_id)
 end
 
-function M.queue_commands(commands, is_context_update)
-    for _, command in ipairs(commands) do
-        if not command:match("^/") then
-            command = "/" .. command
-        end
-        table.insert(command_queue, {cmd = command, is_context_update = is_context_update})
+function M.queue_commands(inputs, is_context_update)
+    for _, input in ipairs(inputs) do
+        table.insert(command_queue, {input = input, is_context_update = is_context_update})
     end
     M.process_command_queue()
 end
@@ -107,40 +104,50 @@ function M.process_command_queue()
     end
 
     is_executing = true
-    local commands_to_send = {}
-    local context_update_commands = {}
+    local inputs_to_send = {}
+    local context_update_inputs = {}
 
-    -- Separate context update commands from user commands
-    for _, cmd_data in ipairs(command_queue) do
-        if cmd_data.is_context_update then
-            table.insert(context_update_commands, cmd_data.cmd)
+    -- Separate context update inputs from user inputs
+    for _, input_data in ipairs(command_queue) do
+        if input_data.is_context_update then
+            table.insert(context_update_inputs, input_data.input)
         else
-            table.insert(commands_to_send, cmd_data.cmd)
+            table.insert(inputs_to_send, input_data.input)
         end
     end
     command_queue = {}
 
-    -- Process context update commands first
-    if #context_update_commands > 0 then
-        for _, cmd in ipairs(context_update_commands) do
-            vim.fn.chansend(aider_job_id, cmd .. "\n")
+    -- Process context update inputs first
+    if #context_update_inputs > 0 then
+        for _, input in ipairs(context_update_inputs) do
+            M.send_input(input)
         end
-        Logger.debug("Context update commands sent to Aider: " .. vim.inspect(context_update_commands))
+        Logger.debug("Context update inputs sent to Aider: " .. vim.inspect(context_update_inputs))
     end
 
-    -- Process user commands
-    if #commands_to_send > 0 then
-        for _, cmd in ipairs(commands_to_send) do
-            vim.fn.chansend(aider_job_id, cmd .. "\n")
+    -- Process user inputs
+    if #inputs_to_send > 0 then
+        for _, input in ipairs(inputs_to_send) do
+            M.send_input(input)
         end
-        Logger.debug("User commands sent to Aider: " .. vim.inspect(commands_to_send))
+        Logger.debug("User inputs sent to Aider: " .. vim.inspect(inputs_to_send))
     end
 
-    -- Wait for a short time before processing the next batch of commands
+    -- Wait for a short time before processing the next batch of inputs
     vim.defer_fn(function()
         is_executing = false
         M.process_command_queue()
-    end, 500)  -- 500ms delay to allow for command execution
+    end, 500)  -- 500ms delay to allow for input execution
+end
+
+function M.send_input(input)
+    if input:match("^/") then
+        -- It's a command, send it as is
+        vim.fn.chansend(aider_job_id, input .. "\n")
+    else
+        -- It's raw text, send it without adding a slash
+        vim.fn.chansend(aider_job_id, input)
+    end
 end
 
 function M.on_buffer_open(bufnr)
@@ -155,7 +162,7 @@ function M.on_buffer_open(bufnr)
     end
     
     local relative_filename = vim.fn.fnamemodify(bufname, ":~:.")
-    M.queue_commands({"/add " .. relative_filename}, true)  -- Set is_context_update to true
+    M.queue_commands({"/add " .. relative_filename}, true)  -- Command stays the same
     
     Logger.debug("Buffer opened: " .. relative_filename)
 end
@@ -171,7 +178,7 @@ function M.on_buffer_close(bufnr)
     end
     
     local relative_filename = vim.fn.fnamemodify(bufname, ":~:.")
-    M.queue_commands({"/drop " .. relative_filename}, true)  -- Set is_context_update to true
+    M.queue_commands({"/drop " .. relative_filename}, true)  -- Command stays the same
     
     Logger.debug("Buffer closed: " .. relative_filename)
 end
