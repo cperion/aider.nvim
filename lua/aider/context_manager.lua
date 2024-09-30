@@ -89,8 +89,8 @@ function ContextManager.mass_sync_context()
         table.insert(inputs, "/add " .. table.concat(current_buffers, " "))
     end
 
-    -- Add a final carriage return
-    table.insert(inputs, "\n")
+    -- Add the /token message instead of a carriage return
+    table.insert(inputs, "/token")
 
     -- Update the current context
     current_context = current_buffers
