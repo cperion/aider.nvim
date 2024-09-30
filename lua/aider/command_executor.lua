@@ -20,8 +20,8 @@ function M.setup()
     })
 end
 
-function CommandExecutor.is_aider_running()
-    return CommandExecutor.aider_job_id ~= nil and CommandExecutor.aider_job_id > 0
+function M.is_aider_running()
+    return M.aider_job_id ~= nil and M.aider_job_id > 0
 end
 
 function M.start_aider(buf, args)
@@ -61,18 +61,18 @@ function M.start_aider(buf, args)
     Logger.info("Aider started successfully", correlation_id)
 end
 
-function CommandExecutor.add_buffers_to_command(command, buffers)
+function M.add_buffers_to_command(command, buffers)
     for _, file in ipairs(buffers) do
         command = command .. " " .. vim.fn.shellescape(file)
     end
     return command
 end
 
-function CommandExecutor.update_aider_context()
+function M.update_aider_context()
     local correlation_id = Logger.generate_correlation_id()
     Logger.debug("update_aider_context: Starting context update", correlation_id)
     
-    if CommandExecutor.aider_job_id and CommandExecutor.aider_job_id > 0 then
+    if M.aider_job_id and M.aider_job_id > 0 then
         local new_context = BufferManager.get_aider_context()
         local commands = ContextManager.get_batched_commands()
 
@@ -81,7 +81,7 @@ function CommandExecutor.update_aider_context()
         Logger.debug("Generated commands: " .. vim.inspect(commands), correlation_id)
 
         if #commands > 0 then
-            CommandExecutor.execute_commands(commands)
+            M.execute_commands(commands)
             Logger.debug("Commands executed", correlation_id)
         else
             Logger.debug("No commands to execute", correlation_id)
