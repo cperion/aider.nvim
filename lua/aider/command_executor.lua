@@ -8,6 +8,36 @@ M.aider_job_id = nil
 local command_queue = {}
 local is_executing = false
 
+local function find_prompt_line(buf)
+    local lines = vim.api.nvim_buf_get_lines(buf, -10, -1, false)
+    for i = #lines, 1, -1 do
+        if lines[i]:match("> %s*$") then
+            return -#lines + i - 1
+        end
+    end
+    return -1
+end
+
+local function insert_commands_at_prompt(buf, commands)
+    local prompt_line = find_prompt_line(buf)
+    if prompt_line == -1 then
+        Logger.warn("Couldn't find prompt line in Aider buffer")
+        return false
+    end
+
+    local current_line = vim.api.nvim_buf_get_lines(buf, prompt_line, prompt_line + 1, false)[1]
+    local prefix = current_line:match("^(.*)> %s*$") or ""
+
+    local new_lines = {}
+    for _, cmd in ipairs(commands) do
+        table.insert(new_lines, prefix .. cmd)
+    end
+    table.insert(new_lines, current_line)
+
+    vim.api.nvim_buf_set_lines(buf, prompt_line, prompt_line + 1, false, new_lines)
+    return true
+end
+
 function M.setup()
     vim.api.nvim_create_autocmd("BufReadPost", {
         callback = function(args)
@@ -92,32 +122,29 @@ function M.update_aider_context()
 end
 
 function M.queue_commands(commands)
-    -- Ensure there's a newline before adding commands
-    if #command_queue > 0 and not command_queue[#command_queue]:match("\n$") then
-        table.insert(command_queue, "\n")
-    end
-    
     for _, command in ipairs(commands) do
-        -- Ensure each command starts on a new line
         if not command:match("^/") then
             command = "/" .. command
         end
-        table.insert(command_queue, command .. "\n")
+        table.insert(command_queue, command)
     end
     M.process_command_queue()
 end
 
 function M.process_command_queue()
-    if is_executing or #command_queue == 0 or not M.is_aider_running() then
+    if is_executing or #command_queue == 0 or not M.is_aider_running() or not aider_buf then
         return
     end
 
     is_executing = true
-    local commands_to_send = table.concat(command_queue)
+    local commands_to_send = vim.deepcopy(command_queue)
     command_queue = {}
-    
-    Logger.debug("Sending commands: " .. vim.inspect(commands_to_send))
-    vim.fn.chansend(M.aider_job_id, commands_to_send)
+
+    if insert_commands_at_prompt(aider_buf, commands_to_send) then
+        Logger.debug("Commands inserted at prompt: " .. vim.inspect(commands_to_send))
+    else
+        Logger.warn("Failed to insert commands at prompt")
+    end
 
     -- Wait for a short time before processing the next batch of commands
     vim.defer_fn(function()
