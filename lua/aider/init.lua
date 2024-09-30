@@ -31,8 +31,8 @@ function M.open(args, layout)
     require("aider.core").open(args, layout)
 end
 
-function M.toggle()
-    require("aider.core").toggle()
+function M.toggle(args, layout)
+    require("aider.core").toggle(args, layout)
 end
 
 return M
