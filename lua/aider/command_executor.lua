@@ -9,6 +9,18 @@ local command_queue = {}
 local is_executing = false
 
 local function append_commands(buf, commands)
+    -- Check if the buffer exists and is valid
+    if not vim.api.nvim_buf_is_valid(buf) then
+        Logger.error("Invalid buffer")
+        return false
+    end
+
+    -- Save the current modifiable state
+    local was_modifiable = vim.api.nvim_buf_get_option(buf, 'modifiable')
+
+    -- Set the buffer to modifiable
+    vim.api.nvim_buf_set_option(buf, 'modifiable', true)
+
     local line_count = vim.api.nvim_buf_line_count(buf)
     
     -- Insert new commands
@@ -23,6 +35,9 @@ local function append_commands(buf, commands)
     for _ = 1, #commands do
         vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<CR>", true, false, true), "n", true)
     end
+
+    -- Restore the original modifiable state
+    vim.api.nvim_buf_set_option(buf, 'modifiable', was_modifiable)
 
     return true
 end
@@ -141,14 +156,22 @@ function M.process_command_queue()
 
     -- Process context update commands first
     if #context_update_commands > 0 then
-        append_commands(aider_buf, context_update_commands)
-        Logger.debug("Context update commands executed in Aider buffer: " .. vim.inspect(context_update_commands))
+        local success, err = pcall(append_commands, aider_buf, context_update_commands)
+        if not success then
+            Logger.error("Failed to execute context update commands: " .. tostring(err))
+        else
+            Logger.debug("Context update commands executed in Aider buffer: " .. vim.inspect(context_update_commands))
+        end
     end
 
     -- Process user commands
     if #commands_to_send > 0 then
-        append_commands(aider_buf, commands_to_send)
-        Logger.debug("User commands executed in Aider buffer: " .. vim.inspect(commands_to_send))
+        local success, err = pcall(append_commands, aider_buf, commands_to_send)
+        if not success then
+            Logger.error("Failed to execute user commands: " .. tostring(err))
+        else
+            Logger.debug("User commands executed in Aider buffer: " .. vim.inspect(commands_to_send))
+        end
     end
 
     -- Wait for a short time before processing the next batch of commands
