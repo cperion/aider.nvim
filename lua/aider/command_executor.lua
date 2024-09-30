@@ -27,14 +27,18 @@ end
 function M.start_aider(buf, args)
     local correlation_id = Logger.generate_correlation_id()
     args = args or ""
-    local context_buffers = BufferManager.get_context_buffers()  -- Changed from get_aider_context
+    local context_buffers = BufferManager.get_context_buffers()
     
     Logger.debug("start_aider: Starting with buffer " .. tostring(buf) .. " and args: " .. args, correlation_id)
     Logger.debug("start_aider: Context buffers: " .. vim.inspect(context_buffers), correlation_id)
 
     -- Construct the command
     local command = "aider " .. args
-    command = M.add_buffers_to_command(command, context_buffers)
+
+    -- Add each file to the command, properly escaped
+    for _, file in ipairs(context_buffers) do
+        command = command .. " " .. vim.fn.shellescape(file)
+    end
 
     Logger.info("Starting Aider", correlation_id)
     Logger.debug("Command: " .. command, correlation_id)
@@ -61,12 +65,6 @@ function M.start_aider(buf, args)
     Logger.info("Aider started successfully", correlation_id)
 end
 
-function M.add_buffers_to_command(command, buffers)
-    for _, file in ipairs(buffers) do
-        command = command .. " " .. vim.fn.shellescape(file)
-    end
-    return command
-end
 
 function M.update_aider_context()
     local correlation_id = Logger.generate_correlation_id()
