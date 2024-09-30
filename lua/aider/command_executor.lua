@@ -92,8 +92,17 @@ function M.update_aider_context()
 end
 
 function M.queue_commands(commands)
+    -- Ensure there's a newline before adding commands
+    if #command_queue > 0 and not command_queue[#command_queue]:match("\n$") then
+        table.insert(command_queue, "\n")
+    end
+    
     for _, command in ipairs(commands) do
-        table.insert(command_queue, command)
+        -- Ensure each command starts on a new line
+        if not command:match("^/") then
+            command = "/" .. command
+        end
+        table.insert(command_queue, command .. "\n")
     end
     M.process_command_queue()
 end
@@ -104,12 +113,13 @@ function M.process_command_queue()
     end
 
     is_executing = true
-    local command = table.remove(command_queue, 1)
+    local commands_to_send = table.concat(command_queue)
+    command_queue = {}
     
-    Logger.debug("Sending command: " .. vim.inspect(command))
-    vim.fn.chansend(M.aider_job_id, command .. "\n")
+    Logger.debug("Sending commands: " .. vim.inspect(commands_to_send))
+    vim.fn.chansend(M.aider_job_id, commands_to_send)
 
-    -- Wait for a short time before processing the next command
+    -- Wait for a short time before processing the next batch of commands
     vim.defer_fn(function()
         is_executing = false
         M.process_command_queue()
