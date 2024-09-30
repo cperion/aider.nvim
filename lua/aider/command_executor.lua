@@ -1,12 +1,23 @@
 local BufferManager = require("aider.buffer_manager")
 local ContextManager = require("aider.context_manager")
 local Logger = require("aider.logger")
+local config = require("aider.config")
 
 local M = {}
 local aider_buf = nil
 local aider_job_id = nil
 local command_queue = {}
 local is_executing = false
+
+function M.scroll_to_bottom()
+    if aider_buf and vim.api.nvim_buf_is_valid(aider_buf) then
+        local window = vim.fn.bufwinid(aider_buf)
+        if window ~= -1 then
+            local line_count = vim.api.nvim_buf_line_count(aider_buf)
+            vim.api.nvim_win_set_cursor(window, {line_count, 0})
+        end
+    end
+end
 
 function M.setup()
 	vim.api.nvim_create_autocmd("BufReadPost", {
@@ -64,6 +75,13 @@ function M.start_aider(buf, args)
 	Logger.debug("Context updated", correlation_id)
 
 	Logger.info("Aider started successfully", correlation_id)
+
+	-- Scroll to the bottom after starting Aider if auto_scroll is enabled
+	if config.get("auto_scroll") then
+		vim.schedule(function()
+			M.scroll_to_bottom()
+		end)
+	end
 end
 
 function M.update_aider_context()
@@ -147,6 +165,13 @@ function M.send_input(input)
 	else
 		-- It's raw text, send it without adding a slash
 		vim.fn.chansend(aider_job_id, input)
+	end
+	
+	-- Scroll to the bottom after sending input if auto_scroll is enabled
+	if config.get("auto_scroll") then
+		vim.schedule(function()
+			M.scroll_to_bottom()
+		end)
 	end
 end
 

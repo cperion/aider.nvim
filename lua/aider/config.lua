@@ -13,6 +13,7 @@ local default_config = {
 	},
 	log_level = vim.log.levels.INFO,
 	log_file = nil, -- Set to a file path to enable file logging
+	auto_scroll = true,
 }
 
 local user_config = {}
