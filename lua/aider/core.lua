@@ -40,18 +40,23 @@ function Aider.open(args, layout)
 end
 
 function Aider.toggle()
-	local correlation_id = Logger.generate_correlation_id()
-	local is_open = WindowManager.is_window_open()
-	Logger.debug("Toggling Aider window. Current state: " .. (is_open and "open" or "closed"), correlation_id)
+    local correlation_id = Logger.generate_correlation_id()
+    local is_open = WindowManager.is_window_open()
+    Logger.debug("Toggling Aider window. Current state: " .. (is_open and "open" or "closed"), correlation_id)
 
-	if is_open then
-		WindowManager.hide_aider_window()
-	else
-		local buf = BufferManager.get_aider_buffer()
-		WindowManager.show_window(buf, current_layout)
-	end
+    if is_open then
+        WindowManager.hide_aider_window()
+    else
+        local buf = BufferManager.get_aider_buffer()
+        WindowManager.show_window(buf, current_layout)
+        
+        -- Start the Aider job if it's not already running
+        if not CommandExecutor.is_aider_running() then
+            CommandExecutor.start_aider(buf)
+        end
+    end
 
-	Logger.debug("New state: " .. (WindowManager.is_window_open() and "open" or "closed"), correlation_id)
+    Logger.debug("New state: " .. (WindowManager.is_window_open() and "open" or "closed"), correlation_id)
 end
 
 function Aider.cleanup()

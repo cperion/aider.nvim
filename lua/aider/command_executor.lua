@@ -10,6 +10,10 @@ function CommandExecutor.setup()
     -- No setup needed for now
 end
 
+function CommandExecutor.is_aider_running()
+    return aider_job_id ~= nil and aider_job_id > 0
+end
+
 function CommandExecutor.start_aider(buf, args)
     local correlation_id = Logger.generate_correlation_id()
     args = args or ""
