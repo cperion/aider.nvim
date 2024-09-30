@@ -27,7 +27,7 @@ end
 function M.start_aider(buf, args)
     local correlation_id = Logger.generate_correlation_id()
     args = args or ""
-    local context_buffers = BufferManager.get_aider_context()
+    local context_buffers = BufferManager.get_context_buffers()  -- Changed from get_aider_context
     
     Logger.debug("start_aider: Starting with buffer " .. tostring(buf) .. " and args: " .. args, correlation_id)
     Logger.debug("start_aider: Context buffers: " .. vim.inspect(context_buffers), correlation_id)
