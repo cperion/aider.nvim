@@ -80,31 +80,31 @@ function BufferManager.should_include_in_context(buf)
 end
 
 function BufferManager.update_context()
-	local correlation_id = Logger.generate_correlation_id()
-	Logger.debug("Updating context", correlation_id)
-	local start_time = os.clock() * 1000
+    local correlation_id = Logger.generate_correlation_id()
+    Logger.debug("Updating context", correlation_id)
+    local start_time = os.clock() * 1000
 
-	local valid_buffers = BufferManager.get_valid_buffers()
-	Logger.debug("Current valid buffers: " .. vim.inspect(valid_buffers), correlation_id)
+    local valid_buffers = BufferManager.get_valid_buffers()
+    Logger.debug("Current valid buffers: " .. vim.inspect(valid_buffers), correlation_id)
 
-	local new_context = BufferManager.get_context_buffers()
-	Logger.debug("Current context: " .. vim.inspect(aider_context), correlation_id)
-	Logger.debug("New context: " .. vim.inspect(new_context), correlation_id)
+    local new_context = BufferManager.get_context_buffers()
+    Logger.debug("Current context: " .. vim.inspect(aider_context), correlation_id)
+    Logger.debug("New context: " .. vim.inspect(new_context), correlation_id)
 
-	if not vim.deep_equal(aider_context, new_context) then
-		Logger.debug("Context changed, updating Aider", correlation_id)
-		aider_context = new_context
-		require("aider.context_manager").update(new_context)
-		local commands = require("aider.context_manager").get_batched_commands()
-		if #commands > 0 then
-			require("aider.command_executor").queue_commands(commands)
-		end
-	else
-		Logger.debug("Context unchanged, no update needed", correlation_id)
-	end
+    if not vim.deep_equal(aider_context, new_context) then
+        Logger.debug("Context changed, updating Aider", correlation_id)
+        aider_context = new_context
+        require("aider.context_manager").update(new_context)
+        local commands = require("aider.context_manager").get_batched_commands()
+        if #commands > 0 then
+            require("aider.command_executor").queue_commands(commands, true)
+        end
+    else
+        Logger.debug("Context unchanged, no update needed", correlation_id)
+    end
 
-	local end_time = os.clock() * 1000
-	Logger.debug(string.format("Context update operation took %.3f ms", (end_time - start_time)), correlation_id)
+    local end_time = os.clock() * 1000
+    Logger.debug(string.format("Context update operation took %.3f ms", (end_time - start_time)), correlation_id)
 end
 
 function BufferManager.get_aider_context()

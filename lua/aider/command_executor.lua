@@ -37,51 +37,50 @@ function M.is_aider_running()
 	return aider_job_id ~= nil and aider_job_id > 0
 end
 
-function M.start_aider(buf, args)
-	local correlation_id = Logger.generate_correlation_id()
-	args = args or ""
-	local context_buffers = BufferManager.get_context_buffers()
+function M.start_aider(buf, args, initial_context)
+    local correlation_id = Logger.generate_correlation_id()
+    args = args or ""
 
-	Logger.debug("start_aider: Starting with buffer " .. tostring(buf) .. " and args: " .. args, correlation_id)
-	Logger.debug("start_aider: Context buffers: " .. vim.inspect(context_buffers), correlation_id)
+    Logger.debug("start_aider: Starting with buffer " .. tostring(buf) .. " and args: " .. args, correlation_id)
+    Logger.debug("start_aider: Initial context: " .. vim.inspect(initial_context), correlation_id)
 
-	-- Construct the command
-	local command = "aider " .. args
+    -- Construct the command
+    local command = "aider " .. args
 
-	-- Add each file to the command, properly escaped
-	for _, file in ipairs(context_buffers) do
-		command = command .. " " .. vim.fn.shellescape(file)
-	end
+    -- Add each file from the initial context to the command, properly escaped
+    for _, file in ipairs(initial_context) do
+        command = command .. " " .. vim.fn.shellescape(file)
+    end
 
-	Logger.info("Starting Aider", correlation_id)
-	Logger.debug("Command: " .. command, correlation_id)
+    Logger.info("Starting Aider", correlation_id)
+    Logger.debug("Command: " .. command, correlation_id)
 
-	-- Start the job using vim.fn.termopen and store the job ID
-	aider_job_id = vim.fn.termopen(command, {
-		on_exit = function(job_id, exit_code, event_type)
-			M.on_aider_exit(exit_code)
-		end,
-	})
+    -- Start the job using vim.fn.termopen and store the job ID
+    aider_job_id = vim.fn.termopen(command, {
+        on_exit = function(job_id, exit_code, event_type)
+            M.on_aider_exit(exit_code)
+        end,
+    })
 
-	if aider_job_id <= 0 then
-		Logger.error("Failed to start Aider job. Job ID: " .. tostring(aider_job_id), correlation_id)
-		return
-	end
+    if aider_job_id <= 0 then
+        Logger.error("Failed to start Aider job. Job ID: " .. tostring(aider_job_id), correlation_id)
+        return
+    end
 
-	Logger.debug("Aider job started with job_id: " .. tostring(aider_job_id), correlation_id)
+    Logger.debug("Aider job started with job_id: " .. tostring(aider_job_id), correlation_id)
 
-	aider_buf = buf
-	ContextManager.update(context_buffers)
-	Logger.debug("Context updated", correlation_id)
+    aider_buf = buf
+    ContextManager.update(initial_context)
+    Logger.debug("Context updated", correlation_id)
 
-	Logger.info("Aider started successfully", correlation_id)
+    Logger.info("Aider started successfully", correlation_id)
 
-	-- Scroll to the bottom after starting Aider if auto_scroll is enabled
-	if config.get("auto_scroll") then
-		vim.schedule(function()
-			M.scroll_to_bottom()
-		end)
-	end
+    -- Scroll to the bottom after starting Aider if auto_scroll is enabled
+    if config.get("auto_scroll") then
+        vim.schedule(function()
+            M.scroll_to_bottom()
+        end)
+    end
 end
 
 function M.update_aider_context()

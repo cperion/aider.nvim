@@ -26,15 +26,23 @@ function Aider.setup()
 end
 
 function Aider.open(args, layout)
-	local correlation_id = Logger.generate_correlation_id()
-	Logger.debug("Opening Aider window", correlation_id)
+    local correlation_id = Logger.generate_correlation_id()
+    Logger.debug("Opening Aider window", correlation_id)
 
-	local buf = BufferManager.get_aider_buffer()
-	local used_layout = layout or current_layout
-	WindowManager.show_window(buf, used_layout)
+    local buf = BufferManager.get_aider_buffer()
+    local used_layout = layout or current_layout
+    WindowManager.show_window(buf, used_layout)
 
-	CommandExecutor.start_aider(buf, args)
-	Logger.debug("Aider window opened", correlation_id)
+    -- Start Aider without initial context
+    CommandExecutor.start_aider(buf, args, {})
+
+    -- Update context after Aider has started
+    vim.schedule(function()
+        BufferManager.update_context()
+        CommandExecutor.update_aider_context()
+    end)
+
+    Logger.debug("Aider window opened", correlation_id)
 end
 
 function Aider.toggle(args, layout)
