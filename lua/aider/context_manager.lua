@@ -13,32 +13,32 @@ local function get_relative_path(file)
 end
 
 function ContextManager.update(new_context)
-	local correlation_id = Logger.generate_correlation_id()
-	Logger.debug("ContextManager.update: Starting context update", correlation_id)
+    local correlation_id = Logger.generate_correlation_id()
+    Logger.debug("ContextManager.update: Starting context update", correlation_id)
 
-	local valid_buffers = BufferManager.get_valid_buffers()
-	Logger.debug("Current valid buffers: " .. vim.inspect(valid_buffers), correlation_id)
+    local valid_buffers = BufferManager.get_valid_buffers()
+    Logger.debug("Current valid buffers: " .. vim.inspect(valid_buffers), correlation_id)
 
-	Logger.debug("Current context: " .. vim.inspect(current_context), correlation_id)
-	Logger.debug("New context: " .. vim.inspect(new_context), correlation_id)
+    Logger.debug("Current context: " .. vim.inspect(current_context), correlation_id)
+    Logger.debug("New context: " .. vim.inspect(new_context), correlation_id)
 
-	-- Calculate differences
-	for _, file in ipairs(new_context) do
-		if not vim.tbl_contains(current_context, file) then
-			pending_changes.add[file] = true
-		end
-	end
+    -- Calculate differences
+    for _, file in ipairs(new_context) do
+        if not vim.tbl_contains(current_context, file) then
+            pending_changes.add[file] = true
+        end
+    end
 
-	for _, file in ipairs(current_context) do
-		if not vim.tbl_contains(new_context, file) then
-			pending_changes.drop[file] = true
-		end
-	end
+    for _, file in ipairs(current_context) do
+        if not vim.tbl_contains(new_context, file) then
+            pending_changes.drop[file] = true
+        end
+    end
 
-	current_context = new_context
+    current_context = new_context
 
-	Logger.debug("Pending changes: " .. vim.inspect(pending_changes), correlation_id)
-	Logger.debug("ContextManager.update: Context update complete", correlation_id)
+    Logger.debug("Pending changes: " .. vim.inspect(pending_changes), correlation_id)
+    Logger.debug("ContextManager.update: Context update complete", correlation_id)
 end
 
 function ContextManager.get_batched_commands()

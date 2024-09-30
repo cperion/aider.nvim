@@ -47,7 +47,7 @@ end
 function M.start_aider(buf, args, initial_context)
     local correlation_id = Logger.generate_correlation_id()
     args = args or ""
-    initial_context = initial_context or {}  -- Add this line to provide a default empty table
+    initial_context = initial_context or {}
 
     Logger.debug("start_aider: Starting with buffer " .. tostring(buf) .. " and args: " .. args, correlation_id)
     Logger.debug("start_aider: Initial context: " .. vim.inspect(initial_context), correlation_id)
@@ -82,6 +82,13 @@ function M.start_aider(buf, args, initial_context)
     Logger.debug("Context updated", correlation_id)
 
     Logger.info("Aider started successfully", correlation_id)
+
+    -- Scroll to the bottom after starting Aider if auto_scroll is enabled
+    if config.get("auto_scroll") then
+        vim.schedule(function()
+            M.scroll_to_bottom()
+        end)
+    end
 
     -- Scroll to the bottom after starting Aider if auto_scroll is enabled
     if config.get("auto_scroll") then
