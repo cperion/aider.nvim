@@ -48,15 +48,24 @@ function CommandExecutor.start_aider(buf, args)
     Logger.debug("Buffer options set", correlation_id)
 
     -- Start the job
-    aider_job_id = vim.fn.termopen(command, {
-        on_exit = function(_, exit_code)
-            Logger.debug("Aider job exited with code: " .. tostring(exit_code), correlation_id)
-            CommandExecutor.on_aider_exit(exit_code)
-        end,
-    })
+    local ok, result = pcall(function()
+        return vim.fn.termopen(command, {
+            on_exit = function(_, exit_code)
+                Logger.debug("Aider job exited with code: " .. tostring(exit_code), correlation_id)
+                CommandExecutor.on_aider_exit(exit_code)
+            end,
+        })
+    end)
+
+    if not ok then
+        Logger.error("Failed to start Aider job: " .. tostring(result), correlation_id)
+        return
+    end
+
+    aider_job_id = result
 
     if aider_job_id <= 0 then
-        Logger.error("Failed to start Aider job", correlation_id)
+        Logger.error("Failed to start Aider job. Job ID: " .. tostring(aider_job_id), correlation_id)
         return
     end
 
