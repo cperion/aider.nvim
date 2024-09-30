@@ -22,6 +22,12 @@ function CommandExecutor.start_aider(buf, args)
     Logger.debug("start_aider: Starting with buffer " .. tostring(buf) .. " and args: " .. args, correlation_id)
     Logger.debug("start_aider: Context buffers: " .. vim.inspect(context_buffers), correlation_id)
 
+    -- Check if the buffer is valid
+    if not vim.api.nvim_buf_is_valid(buf) then
+        Logger.error("Invalid buffer: " .. tostring(buf), correlation_id)
+        return
+    end
+
     -- Construct the command
     local command = "aider " .. args
     command = CommandExecutor.add_buffers_to_command(command, context_buffers)
