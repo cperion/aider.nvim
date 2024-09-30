@@ -9,13 +9,24 @@ local command_queue = {}
 local is_executing = false
 
 local function find_prompt_line(buf)
-    local lines = vim.api.nvim_buf_get_lines(buf, -10, -1, false)
+    local lines = vim.api.nvim_buf_get_lines(buf, -20, -1, false)
     for i = #lines, 1, -1 do
-        if lines[i]:match("%w*>%s*$") then
+        if lines[i]:match("^%s*%w*>%s*$") then
             return -#lines + i - 1
         end
     end
     return -1
+end
+
+local function get_current_input(buf)
+    local prompt_line = find_prompt_line(buf)
+    if prompt_line == -1 then
+        return nil
+    end
+    
+    local line_count = vim.api.nvim_buf_line_count(buf)
+    local input_lines = vim.api.nvim_buf_get_lines(buf, prompt_line + 1, line_count, false)
+    return table.concat(input_lines, "\n")
 end
 
 local function insert_commands_at_prompt(buf, commands)
@@ -25,16 +36,27 @@ local function insert_commands_at_prompt(buf, commands)
         return false
     end
 
-    local current_line = vim.api.nvim_buf_get_lines(buf, prompt_line, prompt_line + 1, false)[1]
-    local prefix = current_line:match("^(.*)> %s*$") or ""
+    local current_input = get_current_input(buf)
+    local line_count = vim.api.nvim_buf_line_count(buf)
 
-    local new_lines = {}
-    for _, cmd in ipairs(commands) do
-        table.insert(new_lines, prefix .. cmd)
+    -- Clear existing input
+    if current_input and #current_input > 0 then
+        vim.api.nvim_buf_set_lines(buf, prompt_line + 1, line_count, false, {})
     end
-    table.insert(new_lines, current_line)
 
-    vim.api.nvim_buf_set_lines(buf, prompt_line, prompt_line + 1, false, new_lines)
+    -- Insert new commands
+    for _, cmd in ipairs(commands) do
+        vim.api.nvim_buf_set_lines(buf, -1, -1, false, {cmd})
+    end
+
+    -- Move cursor to the end of the buffer
+    vim.api.nvim_win_set_cursor(0, {line_count + #commands, 0})
+
+    -- Simulate Enter key press for each command
+    for _ = 1, #commands do
+        vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<CR>", true, false, true), "n", true)
+    end
+
     return true
 end
 
@@ -141,16 +163,16 @@ function M.process_command_queue()
     command_queue = {}
 
     if insert_commands_at_prompt(aider_buf, commands_to_send) then
-        Logger.debug("Commands inserted at prompt: " .. vim.inspect(commands_to_send))
+        Logger.debug("Commands inserted and executed in Aider buffer: " .. vim.inspect(commands_to_send))
     else
-        Logger.warn("Failed to insert commands at prompt")
+        Logger.warn("Failed to insert and execute commands in Aider buffer")
     end
 
     -- Wait for a short time before processing the next batch of commands
     vim.defer_fn(function()
         is_executing = false
         M.process_command_queue()
-    end, 100)  -- 100ms delay
+    end, 500)  -- 500ms delay to allow for command execution
 end
 
 function M.on_buffer_open(bufnr)
