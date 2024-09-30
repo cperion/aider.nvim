@@ -48,6 +48,10 @@ function BufferManager.get_or_create_aider_buffer()
 		vim.api.nvim_set_option_value("bufhidden", "hide", { buf = aider_buf })
 		vim.api.nvim_set_option_value("swapfile", false, { buf = aider_buf })
 		vim.api.nvim_set_option_value("buflisted", false, { buf = aider_buf })
+		
+		-- Add this line to set up the 'q' keybinding for the Aider buffer
+		vim.api.nvim_buf_set_keymap(aider_buf, 'n', 'q', '<cmd>lua require("aider.core").toggle()<CR>', { silent = true })
+		
 		return aider_buf
 	end
 end
