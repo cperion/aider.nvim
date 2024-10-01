@@ -78,23 +78,7 @@ function Aider.cleanup()
 end
 
 function Aider.setup_autocommands()
-	local aider_group = vim.api.nvim_create_augroup("AiderSync", { clear = true })
-
-	vim.api.nvim_create_autocmd({ "BufEnter", "BufLeave", "BufWritePost" }, {
-		group = aider_group,
-		pattern = "*",
-		callback = function()
-			require("aider.core").debounce_update()
-		end,
-	})
-
-	vim.api.nvim_create_autocmd("BufEnter", {
-		group = aider_group,
-		pattern = "Aider",
-		callback = function()
-			require("aider.core").on_aider_buffer_enter()
-		end,
-	})
+    -- Autocommands are now managed in autocmds.lua
 end
 
 function Aider.debounce_update()

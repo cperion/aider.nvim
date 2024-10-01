@@ -27,17 +27,7 @@ function M.scroll_to_bottom()
 end
 
 function M.setup()
-	vim.api.nvim_create_autocmd("BufReadPost", {
-		callback = function(args)
-			M.on_buffer_open(args.buf)
-		end,
-	})
-
-	vim.api.nvim_create_autocmd("BufDelete", {
-		callback = function(args)
-			M.on_buffer_close(args.buf)
-		end,
-	})
+    -- Autocommands are now managed in autocmds.lua
 end
 
 function M.is_aider_running()
