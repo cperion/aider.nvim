@@ -5,7 +5,6 @@ local Config = {}
 local default_config = {
 	auto_manage_context = true,
 	default_layout = "float",
-	update_debounce_ms = 500,
 	max_buffer_size = 1000000, -- 1MB
 	keys = {
 		open = "<leader> ",
