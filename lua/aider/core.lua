@@ -6,7 +6,6 @@ local config = require("aider.config")
 local Logger = require("aider.logger")
 
 local Aider = {}
-local update_timer = nil
 local current_layout = "vsplit"
 
 function Aider.setup()
@@ -81,30 +80,6 @@ function Aider.setup_autocommands()
     -- Autocommands are now managed in autocmds.lua
 end
 
-function Aider.debounce_update()
-	if update_timer then
-		update_timer:stop()
-	end
-
-	if not update_timer then
-		update_timer = vim.uv.new_timer()
-	end
-
-	local debounce_ms = config.get("update_debounce_ms") or 1000
-
-	update_timer:start(
-		debounce_ms,
-		0,
-		vim.schedule_wrap(function()
-			local new_context = BufferManager.get_context_buffers()
-			if not vim.deep_equal(BufferManager.get_aider_context(), new_context) then
-				BufferManager.update_context()
-				CommandExecutor.update_aider_context()
-			end
-			update_timer:stop()
-		end)
-	)
-end
 
 function Aider.on_aider_buffer_enter()
 	BufferManager.update_context()
