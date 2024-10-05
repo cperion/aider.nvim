@@ -93,7 +93,7 @@ function ContextManager.mass_sync_context()
 	if #current_buffers > 0 then
 		local relative_paths = {}
 		for _, file in ipairs(current_buffers) do
-			table.insert(relative_paths, get_relative_path(file))
+			table.insert(relative_paths, Utils.get_relative_path(file))
 		end
 		table.insert(inputs, "/add " .. table.concat(relative_paths, " "))
 	end
