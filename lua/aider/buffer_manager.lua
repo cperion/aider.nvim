@@ -74,6 +74,8 @@ function BufferManager.should_include_in_context(buf)
 	local bufname = vim.api.nvim_buf_get_name(buf)
 	local buftype = vim.api.nvim_get_option_value("buftype", { buf = buf })
 	local filetype = vim.api.nvim_get_option_value("filetype", { buf = buf })
+	local filesize = vim.fn.getfsize(bufname)
+	
 	return bufname ~= ""
 		and not bufname:match("^term://")
 		and not bufname:match("^fugitive://")
@@ -83,6 +85,8 @@ function BufferManager.should_include_in_context(buf)
 		and filetype ~= "help"
 		and not BufferManager.is_aider_buffer(buf)
 		and vim.fn.filereadable(bufname) == 1
+		and filesize > 0
+		and filesize < 1024 * 1024  -- Exclude files larger than 1MB
 end
 
 function BufferManager.update_context()

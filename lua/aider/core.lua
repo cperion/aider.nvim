@@ -32,10 +32,8 @@ function Aider.open(args, layout)
     local used_layout = layout or current_layout
     WindowManager.show_window(buf, used_layout)
 
-    -- Get initial context
+    -- Get initial context and start Aider in one step
     local initial_context = BufferManager.get_context_buffers()
-
-    -- Start Aider with initial context
     CommandExecutor.start_aider(buf, args, initial_context)
 
     Logger.debug("Aider window opened", correlation_id)
