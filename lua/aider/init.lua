@@ -15,8 +15,10 @@ function M.setup(user_config)
 		Aider.setup()
 		Logger.debug("Aider core setup complete")
 
-		Autocmds.setup()
-		Logger.debug("Autocmds setup complete")
+		vim.defer_fn(function()
+			Autocmds.setup()
+			Logger.debug("Autocmds setup complete")
+		end, 0)
 	end, 0)
 
 	Logger.debug("Aider setup finished")

@@ -1,7 +1,6 @@
 local Logger = require("aider.logger")
 local BufferManager = require("aider.buffer_manager")
 local Utils = require("aider.utils")
-local Utils = require("aider.utils")
 local ContextManager = {}
 
 local current_context = {}
@@ -44,12 +43,12 @@ function ContextManager.get_batched_commands()
 
 	local files_to_add = {}
 	for file, _ in pairs(pending_changes.add) do
-		table.insert(files_to_add, get_relative_path(file))
+		table.insert(files_to_add, Utils.get_relative_path(file))
 	end
 
 	local files_to_drop = {}
 	for file, _ in pairs(pending_changes.drop) do
-		table.insert(files_to_drop, get_relative_path(file))
+		table.insert(files_to_drop, Utils.get_relative_path(file))
 	end
 
 	if #files_to_add > 0 then

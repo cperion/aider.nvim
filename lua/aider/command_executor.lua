@@ -3,7 +3,6 @@ local ContextManager = require("aider.context_manager")
 local Logger = require("aider.logger")
 local config = require("aider.config")
 local Utils = require("aider.utils")
-local Utils = require("aider.utils")
 
 local M = {}
 local aider_buf = nil
@@ -178,7 +177,7 @@ function M.on_buffer_open(bufnr)
 		return
 	end
 
-	local relative_filename = get_relative_path(bufname)
+	local relative_filename = Utils.get_relative_path(bufname)
 	M.queue_commands({ "/add " .. relative_filename }, true)
 
 	Logger.debug("Buffer opened: " .. relative_filename)
@@ -194,7 +193,7 @@ function M.on_buffer_close(bufnr)
 		return
 	end
 
-	local relative_filename = get_relative_path(bufname)
+	local relative_filename = Utils.get_relative_path(bufname)
 	M.queue_commands({ "/drop " .. relative_filename }, true)
 
 	Logger.debug("Buffer closed: " .. relative_filename)

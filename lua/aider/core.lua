@@ -110,8 +110,12 @@ function Aider.mass_sync_context()
 
 	if CommandExecutor.is_aider_running() then
 		local commands = ContextManager.mass_sync_context()
-		CommandExecutor.queue_commands(commands, true) -- Set is_context_update to true
-		Logger.debug("Aider.mass_sync_context: Mass context sync complete", correlation_id)
+		if #commands > 0 then
+			CommandExecutor.queue_commands(commands, true) -- Set is_context_update to true
+			Logger.debug("Aider.mass_sync_context: Mass context sync complete", correlation_id)
+		else
+			Logger.debug("Aider.mass_sync_context: No changes to sync", correlation_id)
+		end
 	else
 		Logger.warn("Aider.mass_sync_context: Aider is not running, skipping sync", correlation_id)
 	end

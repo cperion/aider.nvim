@@ -1,6 +1,6 @@
-local Logger
-
 local Config = {}
+
+local Logger
 
 local default_config = {
 	auto_manage_context = true,
@@ -19,8 +19,9 @@ local default_config = {
 local user_config = {}
 
 function Config.setup(opts)
-	Logger = require("aider.logger")
 	user_config = vim.tbl_deep_extend("force", {}, default_config, opts or {})
+	Logger = require("aider.logger")
+	Logger.setup()
 	Logger.debug("Config setup complete. User config: " .. vim.inspect(user_config))
 end
 

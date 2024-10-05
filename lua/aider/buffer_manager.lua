@@ -1,4 +1,5 @@
 local Logger = require("aider.logger")
+local config = require("aider.config")
 local BufferManager = {}
 local aider_buf = nil
 local aider_context = {}
