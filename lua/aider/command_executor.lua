@@ -2,19 +2,13 @@ local BufferManager = require("aider.buffer_manager")
 local ContextManager = require("aider.context_manager")
 local Logger = require("aider.logger")
 local config = require("aider.config")
-local Path = require("plenary.path")
+local Utils = require("aider.utils")
 
 local M = {}
 local aider_buf = nil
 local aider_job_id = nil
 local command_queue = {}
 local is_executing = false
-
-local function get_relative_path(file)
-	local cwd = vim.fn.getcwd()
-	local abs_path = Path:new(file):absolute()
-	return Path:new(abs_path):make_relative(cwd)
-end
 
 function M.scroll_to_bottom()
 	if aider_buf and vim.api.nvim_buf_is_valid(aider_buf) then

@@ -1,16 +1,10 @@
 local Logger = require("aider.logger")
 local BufferManager = require("aider.buffer_manager")
-local Path = require("plenary.path")
+local Utils = require("aider.utils")
 local ContextManager = {}
 
 local current_context = {}
 local pending_changes = { add = {}, drop = {} }
-
-local function get_relative_path(file)
-	local cwd = vim.fn.getcwd()
-	local abs_path = Path:new(file):absolute()
-	return Path:new(abs_path):make_relative(cwd)
-end
 
 function ContextManager.update(new_context)
 	local correlation_id = Logger.generate_correlation_id()
