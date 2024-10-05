@@ -73,10 +73,16 @@ end
 function BufferManager.should_include_in_context(buf)
 	local bufname = vim.api.nvim_buf_get_name(buf)
 	local buftype = vim.api.nvim_get_option_value("buftype", { buf = buf })
+	local filetype = vim.api.nvim_get_option_value("filetype", { buf = buf })
 	return bufname ~= ""
 		and not bufname:match("^term://")
+		and not bufname:match("^fugitive://")
 		and buftype ~= "terminal"
+		and buftype ~= "nofile"
+		and buftype ~= "quickfix"
+		and filetype ~= "help"
 		and not BufferManager.is_aider_buffer(buf)
+		and vim.fn.filereadable(bufname) == 1
 end
 
 function BufferManager.update_context()

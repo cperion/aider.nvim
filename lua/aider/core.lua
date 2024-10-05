@@ -32,14 +32,11 @@ function Aider.open(args, layout)
     local used_layout = layout or current_layout
     WindowManager.show_window(buf, used_layout)
 
-    -- Start Aider without initial context
-    CommandExecutor.start_aider(buf, args, {})
+    -- Get initial context
+    local initial_context = BufferManager.get_context_buffers()
 
-    -- Update context after Aider has started
-    vim.schedule(function()
-        BufferManager.update_context()
-        CommandExecutor.update_aider_context()
-    end)
+    -- Start Aider with initial context
+    CommandExecutor.start_aider(buf, args, initial_context)
 
     Logger.debug("Aider window opened", correlation_id)
 end

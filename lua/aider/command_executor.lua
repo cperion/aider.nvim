@@ -79,13 +79,6 @@ function M.start_aider(buf, args, initial_context)
 			M.scroll_to_bottom()
 		end)
 	end
-
-	-- Scroll to the bottom after starting Aider if auto_scroll is enabled
-	if config.get("auto_scroll") then
-		vim.schedule(function()
-			M.scroll_to_bottom()
-		end)
-	end
 end
 
 function M.update_aider_context()
