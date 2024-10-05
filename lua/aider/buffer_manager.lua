@@ -10,19 +10,19 @@ function BufferManager.setup()
 end
 
 function BufferManager.get_valid_buffers()
-	local valid_buffers = {}
-	for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-		if BufferManager.should_include_in_context(buf) then
-			local bufname = vim.api.nvim_buf_get_name(buf)
-			table.insert(valid_buffers, {
-				id = buf,
-				name = bufname,
-				filetype = vim.api.nvim_get_option_value("filetype", { buf = buf }),
-				modified = vim.api.nvim_get_option_value("modified", { buf = buf }),
-			})
-		end
-	end
-	return valid_buffers
+    local valid_buffers = {}
+    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+        if vim.api.nvim_buf_is_valid(buf) and BufferManager.should_include_in_context(buf) then
+            local bufname = vim.api.nvim_buf_get_name(buf)
+            table.insert(valid_buffers, {
+                id = buf,
+                name = bufname,
+                filetype = vim.api.nvim_buf_get_option(buf, "filetype"),
+                modified = vim.api.nvim_buf_get_option(buf, "modified"),
+            })
+        end
+    end
+    return valid_buffers
 end
 
 function BufferManager.get_or_create_aider_buffer()
@@ -62,13 +62,13 @@ function BufferManager.is_aider_buffer(buf)
 end
 
 function BufferManager.get_context_buffers()
-	local context_buffers = {}
-	for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-		if BufferManager.should_include_in_context(buf) then
-			table.insert(context_buffers, vim.api.nvim_buf_get_name(buf))
-		end
-	end
-	return context_buffers
+    local context_buffers = {}
+    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+        if vim.api.nvim_buf_is_valid(buf) and BufferManager.should_include_in_context(buf) then
+            table.insert(context_buffers, vim.api.nvim_buf_get_name(buf))
+        end
+    end
+    return context_buffers
 end
 
 function BufferManager.should_include_in_context(buf)
@@ -91,31 +91,28 @@ function BufferManager.should_include_in_context(buf)
 end
 
 function BufferManager.update_context()
-	local correlation_id = Logger.generate_correlation_id()
-	Logger.debug("Updating context", correlation_id)
-	local start_time = os.clock() * 1000
+    local correlation_id = Logger.generate_correlation_id()
+    Logger.debug("Updating context", correlation_id)
+    local start_time = os.clock() * 1000
 
-	local valid_buffers = BufferManager.get_valid_buffers()
-	Logger.debug("Current valid buffers: " .. vim.inspect(valid_buffers), correlation_id)
+    local new_context = BufferManager.get_context_buffers()
+    Logger.debug("Current context: " .. vim.inspect(aider_context), correlation_id)
+    Logger.debug("New context: " .. vim.inspect(new_context), correlation_id)
 
-	local new_context = BufferManager.get_context_buffers()
-	Logger.debug("Current context: " .. vim.inspect(aider_context), correlation_id)
-	Logger.debug("New context: " .. vim.inspect(new_context), correlation_id)
+    if not vim.deep_equal(aider_context, new_context) then
+        Logger.debug("Context changed, updating Aider", correlation_id)
+        aider_context = new_context
+        require("aider.context_manager").update(new_context)
+        local commands = require("aider.context_manager").get_batched_commands()
+        if #commands > 0 then
+            require("aider.command_executor").queue_commands(commands, true)
+        end
+    else
+        Logger.debug("Context unchanged, no update needed", correlation_id)
+    end
 
-	if not vim.deep_equal(aider_context, new_context) then
-		Logger.debug("Context changed, updating Aider", correlation_id)
-		aider_context = new_context
-		require("aider.context_manager").update(new_context)
-		local commands = require("aider.context_manager").get_batched_commands()
-		if #commands > 0 then
-			require("aider.command_executor").queue_commands(commands, true)
-		end
-	else
-		Logger.debug("Context unchanged, no update needed", correlation_id)
-	end
-
-	local end_time = os.clock() * 1000
-	Logger.debug(string.format("Context update operation took %.3f ms", (end_time - start_time)), correlation_id)
+    local end_time = os.clock() * 1000
+    Logger.debug(string.format("Context update operation took %.3f ms", (end_time - start_time)), correlation_id)
 end
 
 function BufferManager.get_aider_context()
