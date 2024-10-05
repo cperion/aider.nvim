@@ -22,14 +22,13 @@ end
 function Logger.setup()
 	current_log_level = log_levels[config.get("log_level")] or log_levels.DEBUG -- Set to DEBUG by default
 
-	local plugin_dir = get_plugin_directory()
-	local log_path = plugin_dir / "aider.log"
+	local log_path = config.get("log_file") or (get_plugin_directory() / "aider.log")
 
-	log_file = io.open(log_path.filename, "w")
+	log_file = io.open(tostring(log_path), "w")
 	if not log_file then
-		vim.notify("Failed to open log file: " .. log_path.filename, vim.log.levels.ERROR)
+		vim.notify("Failed to open log file: " .. tostring(log_path), vim.log.levels.ERROR)
 	else
-		vim.notify("Aider log file: " .. log_path.filename, vim.log.levels.INFO)
+		vim.notify("Aider log file: " .. tostring(log_path), vim.log.levels.INFO)
 	end
 
 	Logger.debug("Logger setup complete")

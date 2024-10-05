@@ -3,6 +3,7 @@ local ContextManager = require("aider.context_manager")
 local Logger = require("aider.logger")
 local config = require("aider.config")
 local Utils = require("aider.utils")
+local Utils = require("aider.utils")
 
 local M = {}
 local aider_buf = nil

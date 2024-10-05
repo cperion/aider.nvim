@@ -1,6 +1,7 @@
 local Logger = require("aider.logger")
 local BufferManager = require("aider.buffer_manager")
 local Utils = require("aider.utils")
+local Utils = require("aider.utils")
 local ContextManager = {}
 
 local current_context = {}

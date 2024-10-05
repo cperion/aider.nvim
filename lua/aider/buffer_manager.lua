@@ -86,7 +86,7 @@ function BufferManager.should_include_in_context(buf)
 		and not BufferManager.is_aider_buffer(buf)
 		and vim.fn.filereadable(bufname) == 1
 		and filesize > 0
-		and filesize < 1024 * 1024  -- Exclude files larger than 1MB
+		and filesize < config.get("max_context_file_size")
 end
 
 function BufferManager.update_context()
