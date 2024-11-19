@@ -10,7 +10,7 @@ local log_levels = {
 	ERROR = 4,
 }
 
-local current_log_level = log_levels.INFO
+local current_log_level = log_levels.WARN
 local log_file = nil
 
 local function get_plugin_directory()
