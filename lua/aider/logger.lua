@@ -3,12 +3,7 @@ local Path = require("plenary.path")
 
 local Logger = {}
 
-local log_levels = {
-	DEBUG = 1,
-	INFO = 2,
-	WARN = 3,
-	ERROR = 4,
-}
+local log_levels = vim.log.levels
 
 local current_log_level = log_levels.WARN
 local log_file = nil
