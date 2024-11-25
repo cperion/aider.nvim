@@ -31,14 +31,21 @@ end
 
 local function log(level, message, correlation_id)
 	if log_levels[level] >= current_log_level then
+		-- Format message for log file (detailed)
 		local log_message = string.format("[%s] %s: %s", os.date("%Y-%m-%d %H:%M:%S"), level, tostring(message))
 		if correlation_id then
 			log_message = log_message .. " [CorrelationID: " .. tostring(correlation_id) .. "]"
 		end
-		vim.notify(log_message, vim.log.levels[level])
+		
+		-- Write to log file
 		if log_file then
 			log_file:write(log_message .. "\n")
 			log_file:flush()
+		end
+
+		-- Only show UI notifications for WARN and ERROR
+		if level == "WARN" or level == "ERROR" then
+			vim.notify(tostring(message), vim.log.levels[level])
 		end
 	end
 end
