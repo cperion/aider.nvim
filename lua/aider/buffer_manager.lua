@@ -55,14 +55,22 @@ function BufferManager.get_or_create_aider_buffer()
         return nil
     end
 
-    -- Set buffer name and options
+    -- Set initial buffer options
     vim.api.nvim_buf_set_name(buf, "Aider")
-    vim.api.nvim_buf_set_option(buf, "buftype", "terminal")
     vim.api.nvim_buf_set_option(buf, "swapfile", false)
     vim.api.nvim_buf_set_option(buf, "buflisted", true)
 
     aider_buf = buf
     return buf
+end
+
+-- New function to set terminal options
+function BufferManager.set_terminal_options(buf)
+    if buf and vim.api.nvim_buf_is_valid(buf) then
+        vim.schedule(function()
+            pcall(vim.api.nvim_buf_set_option, buf, "buftype", "terminal")
+        end)
+    end
 end
 
 function BufferManager.get_aider_buffer()

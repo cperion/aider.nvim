@@ -40,7 +40,6 @@ function M.start_aider(buf, args, initial_context)
     local term_buf = vim.api.nvim_create_buf(false, true)
     
     -- Set buffer options
-    vim.api.nvim_buf_set_option(term_buf, "buftype", "terminal")
     vim.api.nvim_buf_set_option(term_buf, "buflisted", true)
     
     -- Switch the window to the new terminal buffer
@@ -68,6 +67,9 @@ function M.start_aider(buf, args, initial_context)
         Logger.error("Failed to start Aider job. Job ID: " .. tostring(aider_job_id), correlation_id)
         return
     end
+
+    -- Set terminal options after terminal is opened
+    BufferManager.set_terminal_options(term_buf)
 
     Logger.debug("Aider job started with job_id: " .. tostring(aider_job_id), correlation_id)
 
