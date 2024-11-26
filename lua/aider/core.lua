@@ -117,10 +117,10 @@ function Aider.setup_keybindings()
 		require("aider.core").toggle()
 	end, { silent = true, desc = "Toggle Aider" })
 
-	-- Add buffer-local 'q' mapping when creating Aider buffer
+	-- Add buffer-local 'q' mapping for normal mode only
 	local buf = BufferManager.get_aider_buffer()
 	if buf then
-		vim.keymap.set({ "n", "t" }, "q", function()
+		vim.keymap.set("n", "q", function()
 			WindowManager.hide_aider_window()
 		end, { silent = true, buffer = buf, desc = "Hide Aider window" })
 	end
