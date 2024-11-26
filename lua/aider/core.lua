@@ -64,9 +64,13 @@ function Aider.toggle(args, layout)
 
 		-- Only start Aider if it's not already running
 		if not CommandExecutor.is_aider_running() then
-			local aider_args = args or config.get("aider_args") or ""
-			CommandExecutor.start_aider(buf, aider_args, {})
-			Logger.debug("Aider started with args: " .. aider_args, correlation_id)
+			-- Combine default args with provided args
+			local default_args = config.get("aider_args") or ""
+			local final_args = args and (default_args .. " " .. args) or default_args
+			
+			local initial_context = BufferManager.get_context_buffers()
+			CommandExecutor.start_aider(buf, final_args, initial_context)
+			Logger.debug("Aider started with args: " .. final_args, correlation_id)
 		end
 	end
 
