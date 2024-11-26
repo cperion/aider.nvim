@@ -55,7 +55,10 @@ function M.start_aider(buf, args, initial_context)
     end
 
     -- Construct the command
-    local command = "aider " .. args
+    local command = "aider"
+    if args and args ~= "" then
+        command = command .. " " .. args
+    end
 
     -- Add each file from the initial context to the command, properly escaped
     for _, file in ipairs(initial_context) do

@@ -33,7 +33,13 @@ function Aider.open(args, layout)
     Logger.debug("Default args from config: " .. tostring(default_args), correlation_id)
     Logger.debug("Provided args: " .. tostring(args), correlation_id)
 
-    local final_args = args and (default_args .. " " .. args) or default_args
+    local final_args = ""
+    if default_args ~= "" then
+        final_args = default_args
+    end
+    if args and args ~= "" then
+        final_args = final_args .. (final_args ~= "" and " " or "") .. args
+    end
     Logger.debug("Final args: " .. tostring(final_args), correlation_id)
     
     local buf = BufferManager.get_aider_buffer()
@@ -68,7 +74,13 @@ function Aider.toggle(args, layout)
             Logger.debug("Default args from config: " .. tostring(default_args), correlation_id)
             Logger.debug("Provided args: " .. tostring(args), correlation_id)
 
-            local final_args = args and (default_args .. " " .. args) or default_args
+            local final_args = ""
+            if default_args ~= "" then
+                final_args = default_args
+            end
+            if args and args ~= "" then
+                final_args = final_args .. (final_args ~= "" and " " or "") .. args
+            end
             Logger.debug("Final args: " .. tostring(final_args), correlation_id)
             
             local initial_context = BufferManager.get_context_buffers()
