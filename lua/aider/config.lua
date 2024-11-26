@@ -22,33 +22,37 @@ local default_config = {
 local user_config = {}
 
 function Config.setup(opts)
-	user_config = vim.tbl_deep_extend("force", {}, default_config, opts or {})
-	
-	-- Set default log file if not provided
-	if not user_config.log.file then
-		user_config.log.file = vim.fn.stdpath("cache") .. "/aider.log"
-	end
-	
-	-- Convert log level to vim.log.levels and set legacy fields for compatibility
-	user_config.log_level = vim.log.levels[user_config.log.level] or vim.log.levels.INFO
-	user_config.log_file = user_config.log.file
-	
-	Logger = require("aider.logger")
-	Logger.setup()
-	Logger.debug("Config setup complete. User config: " .. vim.inspect(user_config))
+    -- Deep merge with default config
+    user_config = vim.tbl_deep_extend("force", vim.deepcopy(default_config), opts or {})
+    
+    -- Set default log file if not provided
+    if not user_config.log.file then
+        user_config.log.file = vim.fn.stdpath("cache") .. "/aider.log"
+    end
+    
+    -- Convert log level to vim.log.levels and set legacy fields for compatibility
+    user_config.log_level = vim.log.levels[user_config.log.level] or vim.log.levels.INFO
+    user_config.log_file = user_config.log.file
+    
+    Logger = require("aider.logger")
+    Logger.setup()
+    
+    -- Add more detailed logging of the final configuration
+    Logger.debug("Config setup complete. Full user config: " .. vim.inspect(user_config))
+    Logger.debug("Aider args from config: " .. tostring(user_config.aider_args))
 end
 
 function Config.get(key)
-	local value = user_config
-	for part in string.gmatch(key, "[^.]+") do
-		value = value[part]
-		if value == nil then
-			-- If the key is not found in user_config, check default_config
-			Logger.debug("Config key '" .. key .. "' not found in user_config, using default value")
-			return default_config[key]
-		end
-	end
-	return value
+    local value = user_config
+    for part in string.gmatch(key, "[^.]+") do
+        value = value[part]
+        if value == nil then
+            -- If the key is not found in user_config, check default_config
+            Logger.debug("Config key '" .. key .. "' not found in user_config, using default value")
+            return default_config[key]
+        end
+    end
+    return value
 end
 
 function Config.get_all()

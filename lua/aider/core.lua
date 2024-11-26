@@ -25,56 +25,59 @@ function Aider.setup()
 end
 
 function Aider.open(args, layout)
-	local correlation_id = Logger.generate_correlation_id()
-	Logger.debug("Opening Aider window", correlation_id)
+    local correlation_id = Logger.generate_correlation_id()
+    Logger.debug("Opening Aider window", correlation_id)
 
-	-- Combine default args with provided args
-	local default_args = config.get("aider_args") or ""
-	local final_args = args and (default_args .. " " .. args) or default_args
+    -- Get default args from config with more explicit logging
+    local default_args = config.get("aider_args") or ""
+    Logger.debug("Default args from config: " .. tostring(default_args), correlation_id)
+    Logger.debug("Provided args: " .. tostring(args), correlation_id)
 
-	local buf = BufferManager.get_aider_buffer()
-	local used_layout = layout or current_layout
-	WindowManager.show_window(buf, used_layout)
+    local final_args = args and (default_args .. " " .. args) or default_args
+    Logger.debug("Final args: " .. tostring(final_args), correlation_id)
+    
+    local buf = BufferManager.get_aider_buffer()
+    local used_layout = layout or current_layout
+    WindowManager.show_window(buf, used_layout)
 
-	-- Get initial context and start Aider in one step
-	local initial_context = BufferManager.get_context_buffers()
-	CommandExecutor.start_aider(buf, final_args, initial_context)
+    local initial_context = BufferManager.get_context_buffers()
+    CommandExecutor.start_aider(buf, final_args, initial_context)
 
-	Logger.debug("Aider window opened", correlation_id)
+    Logger.debug("Aider window opened", correlation_id)
 end
 
 function Aider.toggle(args, layout)
-	local correlation_id = Logger.generate_correlation_id()
-	local is_open = WindowManager.is_window_open()
-	Logger.debug("Toggling Aider window. Current state: " .. (is_open and "open" or "closed"), correlation_id)
+    local correlation_id = Logger.generate_correlation_id()
+    local is_open = WindowManager.is_window_open()
+    Logger.debug("Toggling Aider window. Current state: " .. (is_open and "open" or "closed"), correlation_id)
 
-	if is_open then
-		-- When window is open, just close it like 'q' does
-		WindowManager.hide_aider_window()
-	else
-		-- Get existing buffer or create new one
-		local buf = BufferManager.get_aider_buffer()
-		if not buf then
-			Logger.error("Failed to get or create Aider buffer", correlation_id)
-			return
-		end
+    if is_open then
+        WindowManager.hide_aider_window()
+    else
+        local buf = BufferManager.get_aider_buffer()
+        if not buf then
+            Logger.error("Failed to get or create Aider buffer", correlation_id)
+            return
+        end
 
-		local used_layout = layout or config.get("default_layout") or current_layout
-		WindowManager.show_window(buf, used_layout)
+        local used_layout = layout or config.get("default_layout") or current_layout
+        WindowManager.show_window(buf, used_layout)
 
-		-- Only start Aider if it's not already running
-		if not CommandExecutor.is_aider_running() then
-			-- Combine default args with provided args
-			local default_args = config.get("aider_args") or ""
-			local final_args = args and (default_args .. " " .. args) or default_args
-			
-			local initial_context = BufferManager.get_context_buffers()
-			CommandExecutor.start_aider(buf, final_args, initial_context)
-			Logger.debug("Aider started with args: " .. final_args, correlation_id)
-		end
-	end
+        if not CommandExecutor.is_aider_running() then
+            local default_args = config.get("aider_args") or ""
+            Logger.debug("Default args from config: " .. tostring(default_args), correlation_id)
+            Logger.debug("Provided args: " .. tostring(args), correlation_id)
 
-	Logger.debug("New state: " .. (WindowManager.is_window_open() and "open" or "closed"), correlation_id)
+            local final_args = args and (default_args .. " " .. args) or default_args
+            Logger.debug("Final args: " .. tostring(final_args), correlation_id)
+            
+            local initial_context = BufferManager.get_context_buffers()
+            CommandExecutor.start_aider(buf, final_args, initial_context)
+            Logger.debug("Aider started with args: " .. final_args, correlation_id)
+        end
+    end
+
+    Logger.debug("New state: " .. (WindowManager.is_window_open() and "open" or "closed"), correlation_id)
 end
 
 function Aider.cleanup()
