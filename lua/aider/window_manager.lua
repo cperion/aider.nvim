@@ -19,9 +19,15 @@ function WindowManager.show_window(buf, layout)
 
 	-- Create new window only if one doesn't exist
 	if layout == "vsplit" then
+		-- Get current window width and set new width to 50%
+		local width = vim.api.nvim_win_get_width(0)
 		vim.cmd("botright vsplit")
+		vim.api.nvim_win_set_width(vim.api.nvim_get_current_win(), math.floor(width/2))
 	elseif layout == "hsplit" then
+		-- Get current window height and set new height to 50%
+		local height = vim.api.nvim_win_get_height(0)
 		vim.cmd("botright split")
+		vim.api.nvim_win_set_height(vim.api.nvim_get_current_win(), math.floor(height/2))
 	else -- float layout
 		local width = vim.o.columns
 		local height = vim.o.lines
