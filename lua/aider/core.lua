@@ -45,6 +45,7 @@ function Aider.toggle(args, layout)
 	Logger.debug("Toggling Aider window. Current state: " .. (is_open and "open" or "closed"), correlation_id)
 
 	if is_open then
+		-- When window is open, just close it like 'q' does
 		WindowManager.hide_aider_window()
 	else
 		-- Get existing buffer or create new one

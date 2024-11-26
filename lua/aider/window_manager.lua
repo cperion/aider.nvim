@@ -55,8 +55,8 @@ function WindowManager.hide_aider_window()
 		-- Store the current window
 		local current_win = vim.api.nvim_get_current_win()
 
-		-- Hide the window
-		vim.api.nvim_win_hide(aider_win)
+		-- Close the window instead of hiding it
+		vim.api.nvim_win_close(aider_win, true)
 
 		-- Return to the previous window if it's still valid
 		if current_win ~= aider_win and vim.api.nvim_win_is_valid(current_win) then
