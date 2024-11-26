@@ -64,8 +64,8 @@ function BufferManager.get_or_create_aider_buffer()
 
     aider_buf = buf
     
-    -- Set up the 'q' keybinding for the Aider buffer to just hide the window
-    vim.keymap.set("n", "q", function()
+    -- Set up the 'q' keybinding for both normal and terminal modes
+    vim.keymap.set({"n", "t"}, "q", function()
         require("aider.window_manager").hide_aider_window()
     end, { silent = true, buffer = buf })
     

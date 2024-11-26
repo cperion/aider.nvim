@@ -40,26 +40,32 @@ function Aider.open(args, layout)
 end
 
 function Aider.toggle(args, layout)
-	local correlation_id = Logger.generate_correlation_id()
-	local is_open = WindowManager.is_window_open()
-	Logger.debug("Toggling Aider window. Current state: " .. (is_open and "open" or "closed"), correlation_id)
+    local correlation_id = Logger.generate_correlation_id()
+    local is_open = WindowManager.is_window_open()
+    Logger.debug("Toggling Aider window. Current state: " .. (is_open and "open" or "closed"), correlation_id)
 
-	if is_open then
-		WindowManager.hide_aider_window()
-	else
-		local buf = BufferManager.get_aider_buffer()
-		local used_layout = layout or config.get("default_layout") or current_layout
-		WindowManager.show_window(buf, used_layout)
+    if is_open then
+        WindowManager.hide_aider_window()
+    else
+        -- Check if Aider is already running
+        if CommandExecutor.is_aider_running() then
+            -- Just show the existing buffer in a window
+            local buf = BufferManager.get_aider_buffer()
+            local used_layout = layout or config.get("default_layout") or current_layout
+            WindowManager.show_window(buf, used_layout)
+        else
+            -- Start a new Aider instance
+            local buf = BufferManager.get_aider_buffer()
+            local used_layout = layout or config.get("default_layout") or current_layout
+            WindowManager.show_window(buf, used_layout)
 
-		-- Start the Aider job if it's not already running
-		if not CommandExecutor.is_aider_running() then
-			local aider_args = args or config.get("aider_args") or ""
-			CommandExecutor.start_aider(buf, aider_args, {})  -- Pass an empty table as initial_context
-			Logger.debug("Aider started with args: " .. aider_args, correlation_id)
-		end
-	end
+            local aider_args = args or config.get("aider_args") or ""
+            CommandExecutor.start_aider(buf, aider_args, {})
+            Logger.debug("Aider started with args: " .. aider_args, correlation_id)
+        end
+    end
 
-	Logger.debug("New state: " .. (WindowManager.is_window_open() and "open" or "closed"), correlation_id)
+    Logger.debug("New state: " .. (WindowManager.is_window_open() and "open" or "closed"), correlation_id)
 end
 
 function Aider.cleanup()
