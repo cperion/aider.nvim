@@ -7,9 +7,21 @@ local M = {}
 function M.setup()
     local aider_group = vim.api.nvim_create_augroup("Aider", { clear = true })
 
-    -- Monitor buffer state changes
+    -- Separate handler for BufAdd to ensure proper handling of new buffers
+    vim.api.nvim_create_autocmd("BufAdd", {
+        group = aider_group,
+        callback = function(ev)
+            -- Defer the update to ensure buffer is properly loaded
+            vim.defer_fn(function()
+                if vim.api.nvim_buf_is_valid(ev.buf) then
+                    require("aider.command_executor").on_buffer_open(ev.buf)
+                end
+            end, 100)
+        end,
+    })
+
+    -- Keep existing autocmds for other buffer events
     vim.api.nvim_create_autocmd({
-        "BufAdd",
         "BufDelete",
         "BufEnter",
         "BufFilePost",
@@ -17,7 +29,7 @@ function M.setup()
         group = aider_group,
         callback = function()
             vim.defer_fn(function()
-                BufferManager.update_context()
+                require("aider.buffer_manager").update_context()
             end, 50)
         end,
     })
