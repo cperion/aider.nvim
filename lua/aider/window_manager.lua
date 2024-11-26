@@ -52,10 +52,19 @@ function WindowManager.create_window(buf, layout)
 end
 
 function WindowManager.hide_aider_window()
-	if aider_win and vim.api.nvim_win_is_valid(aider_win) then
-		vim.api.nvim_win_close(aider_win, true)
-	end
-	aider_win = nil
+    if aider_win and vim.api.nvim_win_is_valid(aider_win) then
+        -- Get the window count before closing
+        local window_count = vim.fn.winnr('$')
+        
+        -- If this is not the last window, close it normally
+        if window_count > 1 then
+            pcall(vim.api.nvim_win_close, aider_win, true)
+        else
+            -- If it's the last window, create a new empty buffer first
+            vim.cmd('enew')
+        end
+    end
+    aider_win = nil
 end
 
 function WindowManager.is_window_open()
