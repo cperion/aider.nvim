@@ -34,8 +34,8 @@ function M.open(args, layout)
 	require("aider.core").open(args, layout)
 end
 
-function M.toggle(args, layout)
-	require("aider.core").toggle(args, layout)
+function M.toggle(args)
+	require("aider.core").toggle(args)
 end
 
 function M.mass_sync_context()
