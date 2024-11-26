@@ -10,6 +10,18 @@ local aider_job_id = nil
 local command_queue = {}
 local is_executing = false
 
+function M.debug_terminal_state()
+    local state = {
+        job_id = aider_job_id,
+        buf = aider_buf,
+        buf_valid = aider_buf and vim.api.nvim_buf_is_valid(aider_buf) or false,
+        terminal_job_id = aider_buf and vim.api.nvim_buf_is_valid(aider_buf) and 
+            pcall(function() return vim.api.nvim_buf_get_var(aider_buf, "terminal_job_id") end)
+    }
+    Logger.debug("Terminal state: " .. vim.inspect(state))
+    return state
+end
+
 function M.scroll_to_bottom()
 	if aider_buf and vim.api.nvim_buf_is_valid(aider_buf) then
 		local window = vim.fn.bufwinid(aider_buf)
@@ -54,24 +66,26 @@ function M.start_aider(buf, args, initial_context)
     Logger.debug("Command: " .. command, correlation_id)
 
     -- Start the job using vim.fn.termopen and store the job ID
-    aider_job_id = vim.fn.termopen(command, {
+    local job_id = vim.fn.termopen(command, {
         on_exit = function(job_id, exit_code, event_type)
             M.on_aider_exit(exit_code)
         end,
     })
 
-    if aider_job_id <= 0 then
-        Logger.error("Failed to start Aider job. Job ID: " .. tostring(aider_job_id), correlation_id)
+    if job_id <= 0 then
+        Logger.error("Failed to start Aider job. Job ID: " .. tostring(job_id), correlation_id)
         return
     end
 
+    -- Store both the job ID and buffer
+    aider_job_id = job_id
+    aider_buf = buf
+
     -- Set terminal options after terminal is opened
-    BufferManager.set_terminal_options(term_buf)
+    BufferManager.set_terminal_options(buf)
 
     Logger.debug("Aider job started with job_id: " .. tostring(aider_job_id), correlation_id)
-
-    -- Update the aider_buf to be the terminal buffer
-    aider_buf = term_buf
+    
     ContextManager.update(initial_context)
     Logger.debug("Context updated", correlation_id)
 
@@ -130,45 +144,66 @@ function M.queue_commands(inputs, is_context_update)
 end
 
 function M.process_command_queue()
-	if is_executing or #command_queue == 0 or not M.is_aider_running() or not aider_buf then
-		return
-	end
+    if is_executing or #command_queue == 0 or not M.is_aider_running() or not aider_buf then
+        return
+    end
 
-	is_executing = true
-	local inputs_to_send = {}
-	local context_update_inputs = {}
+    is_executing = true
+    local retry_count = 0
+    local max_retries = 3
 
-	-- Separate context update inputs from user inputs
-	for _, input_data in ipairs(command_queue) do
-		if input_data.is_context_update then
-			table.insert(context_update_inputs, input_data.input)
-		else
-			table.insert(inputs_to_send, input_data.input)
-		end
-	end
-	command_queue = {}
+    local function process_batch()
+        local inputs_to_send = {}
+        local context_update_inputs = {}
 
-	-- Process context update inputs first
-	if #context_update_inputs > 0 then
-		for _, input in ipairs(context_update_inputs) do
-			M.send_input(input)
-		end
-		Logger.debug("Context update inputs sent to Aider: " .. vim.inspect(context_update_inputs))
-	end
+        -- Separate context update inputs from user inputs
+        for _, input_data in ipairs(command_queue) do
+            if input_data.is_context_update then
+                table.insert(context_update_inputs, input_data.input)
+            else
+                table.insert(inputs_to_send, input_data.input)
+            end
+        end
 
-	-- Process user inputs
-	if #inputs_to_send > 0 then
-		for _, input in ipairs(inputs_to_send) do
-			M.send_input(input)
-		end
-		Logger.debug("User inputs sent to Aider: " .. vim.inspect(inputs_to_send))
-	end
+        -- Try to send commands
+        local success = true
+        
+        -- Process context update inputs first
+        if #context_update_inputs > 0 then
+            for _, input in ipairs(context_update_inputs) do
+                success = success and pcall(M.send_input, input)
+            end
+            if success then
+                Logger.debug("Context update inputs sent to Aider: " .. vim.inspect(context_update_inputs))
+            end
+        end
 
-	-- Wait for a short time before processing the next batch of inputs
-	vim.defer_fn(function()
-		is_executing = false
-		M.process_command_queue()
-	end, 500) -- 500ms delay to allow for input execution
+        -- Process user inputs
+        if success and #inputs_to_send > 0 then
+            for _, input in ipairs(inputs_to_send) do
+                success = success and pcall(M.send_input, input)
+            end
+            if success then
+                Logger.debug("User inputs sent to Aider: " .. vim.inspect(inputs_to_send))
+            end
+        end
+
+        return success
+    end
+
+    local function retry_processing()
+        if not process_batch() and retry_count < max_retries then
+            retry_count = retry_count + 1
+            Logger.debug("Retrying command processing, attempt " .. retry_count)
+            vim.defer_fn(retry_processing, 100 * retry_count)
+        else
+            command_queue = {}
+            is_executing = false
+            vim.defer_fn(M.process_command_queue, 500)
+        end
+    end
+
+    retry_processing()
 end
 
 function M.send_input(input)
@@ -179,12 +214,31 @@ function M.send_input(input)
 
     Logger.debug("Sending input to Aider: " .. input)
     
-    if input:match("^/") then
-        -- It's a command, send it as is with newline
-        vim.fn.chansend(aider_job_id, input .. "\n")
-    else
-        -- It's raw text, send it without adding a slash
-        vim.fn.chansend(aider_job_id, input)
+    -- Ensure input ends with newline
+    if not input:match("\n$") then
+        input = input .. "\n"
+    end
+
+    -- Try different methods to send input to ensure it works
+    local success = false
+    
+    -- Method 1: Using job_id
+    if aider_job_id then
+        success = pcall(function()
+            vim.fn.chansend(aider_job_id, input)
+        end)
+    end
+    
+    -- Method 2: Using terminal buffer directly if Method 1 failed
+    if not success and aider_buf and vim.api.nvim_buf_is_valid(aider_buf) then
+        success = pcall(function()
+            vim.api.nvim_chan_send(vim.api.nvim_buf_get_var(aider_buf, "terminal_job_id"), input)
+        end)
+    end
+
+    if not success then
+        Logger.error("Failed to send input to Aider terminal")
+        return
     end
 
     -- Scroll to the bottom after sending input if auto_scroll is enabled
