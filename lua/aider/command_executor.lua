@@ -36,14 +36,11 @@ function M.start_aider(buf, args, initial_context)
     Logger.debug("start_aider: Starting with buffer " .. tostring(buf) .. " and args: " .. args, correlation_id)
     Logger.debug("start_aider: Initial context: " .. vim.inspect(initial_context), correlation_id)
 
-    -- Create a new buffer specifically for the terminal
-    local term_buf = vim.api.nvim_create_buf(false, true)
-    
-    -- Set buffer options
-    vim.api.nvim_buf_set_option(term_buf, "buflisted", true)
-    
-    -- Switch the window to the new terminal buffer
-    vim.api.nvim_win_set_buf(0, term_buf)
+    -- If Aider is already running, don't start a new instance
+    if M.is_aider_running() then
+        Logger.debug("Aider already running, reusing existing instance", correlation_id)
+        return
+    end
 
     -- Construct the command
     local command = "aider " .. args

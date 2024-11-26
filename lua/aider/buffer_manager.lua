@@ -44,6 +44,7 @@ function BufferManager.get_valid_buffers()
 end
 
 function BufferManager.get_or_create_aider_buffer()
+    -- If we have a valid buffer, return it
     if aider_buf and vim.api.nvim_buf_is_valid(aider_buf) then
         return aider_buf
     end
@@ -59,7 +60,7 @@ function BufferManager.get_or_create_aider_buffer()
     vim.api.nvim_buf_set_name(buf, "Aider")
     vim.api.nvim_buf_set_option(buf, "swapfile", false)
     vim.api.nvim_buf_set_option(buf, "buflisted", false)  -- Hide from bufferline
-    vim.api.nvim_buf_set_option(buf, "buftype", "nofile")
+    vim.api.nvim_buf_set_option(buf, "buftype", "terminal")
     vim.api.nvim_buf_set_option(buf, "filetype", "aider")
 
     aider_buf = buf
