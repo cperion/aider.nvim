@@ -106,12 +106,20 @@ function BufferManager.update_context()
     local correlation_id = Logger.generate_correlation_id()
     Logger.debug("Updating context", correlation_id)
     
+    if not require("aider.command_executor").is_aider_running() then
+        Logger.debug("Skipping context update - Aider not running", correlation_id)
+        return
+    end
+    
     local new_context = BufferManager.get_context_buffers()
     require("aider.context_manager").update(new_context)
     
     local commands = require("aider.context_manager").get_batched_commands()
     if #commands > 0 then
+        Logger.debug("Sending context update commands: " .. vim.inspect(commands), correlation_id)
         require("aider.command_executor").queue_commands(commands, true)
+    else
+        Logger.debug("No context changes to send", correlation_id)
     end
     
     Logger.debug("Context update complete", correlation_id)

@@ -172,20 +172,27 @@ function M.process_command_queue()
 end
 
 function M.send_input(input)
-	if input:match("^/") then
-		-- It's a command, send it as is
-		vim.fn.chansend(aider_job_id, input .. "\n")
-	else
-		-- It's raw text, send it without adding a slash
-		vim.fn.chansend(aider_job_id, input)
-	end
+    if not M.is_aider_running() then
+        Logger.warn("Cannot send input - Aider is not running")
+        return
+    end
 
-	-- Scroll to the bottom after sending input if auto_scroll is enabled
-	if config.get("auto_scroll") then
-		vim.schedule(function()
-			M.scroll_to_bottom()
-		end)
-	end
+    Logger.debug("Sending input to Aider: " .. input)
+    
+    if input:match("^/") then
+        -- It's a command, send it as is with newline
+        vim.fn.chansend(aider_job_id, input .. "\n")
+    else
+        -- It's raw text, send it without adding a slash
+        vim.fn.chansend(aider_job_id, input)
+    end
+
+    -- Scroll to the bottom after sending input if auto_scroll is enabled
+    if config.get("auto_scroll") then
+        vim.schedule(function()
+            M.scroll_to_bottom()
+        end)
+    end
 end
 
 function M.get_aider_context()

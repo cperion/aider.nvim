@@ -106,17 +106,24 @@ function Aider.on_aider_buffer_enter()
 end
 
 function Aider.setup_keybindings()
-	local open_key = config.get("keys.open") or "<leader>ao"
-	local toggle_key = config.get("keys.toggle") or "<leader>at"
+    local open_key = config.get("keys.open") or "<leader>ao"
+    local toggle_key = config.get("keys.toggle") or "<leader>at"
 
-	vim.keymap.set("n", tostring(open_key), function()
-		require("aider.core").open()
-	end, { silent = true })
+    vim.keymap.set("n", tostring(open_key), function()
+        require("aider.core").open()
+    end, { silent = true, desc = "Open Aider" })
 
-	vim.keymap.set("n", tostring(toggle_key), function()
-		require("aider.core").toggle()
-	end, { silent = true })
+    vim.keymap.set("n", tostring(toggle_key), function()
+        require("aider.core").toggle()
+    end, { silent = true, desc = "Toggle Aider" })
 
+    -- Add buffer-local 'q' mapping when creating Aider buffer
+    local buf = BufferManager.get_aider_buffer()
+    if buf then
+        vim.keymap.set({"n", "t"}, "q", function()
+            WindowManager.hide_aider_window()
+        end, { silent = true, buffer = buf, desc = "Hide Aider window" })
+    end
 end
 
 function Aider.mass_sync_context()
