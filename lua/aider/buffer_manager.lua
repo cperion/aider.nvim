@@ -35,12 +35,15 @@ function BufferManager.get_or_create_aider_buffer()
 			return nil
 		end
 		vim.api.nvim_buf_set_name(aider_buf, "Aider")
+		
+		-- Set buffer options
 		vim.api.nvim_set_option_value("buftype", "nofile", { buf = aider_buf })
 		vim.api.nvim_set_option_value("bufhidden", "hide", { buf = aider_buf })
 		vim.api.nvim_set_option_value("swapfile", false, { buf = aider_buf })
 		vim.api.nvim_set_option_value("buflisted", false, { buf = aider_buf })
+		vim.api.nvim_set_option_value("modifiable", true, { buf = aider_buf })
 
-		-- Add this line to set up the 'q' keybinding for the Aider buffer
+		-- Add the 'q' keybinding for the Aider buffer
 		vim.api.nvim_buf_set_keymap(
 			aider_buf,
 			"n",
