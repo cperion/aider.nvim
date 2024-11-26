@@ -179,6 +179,10 @@ function M.send_input(input)
 	end
 end
 
+function M.get_aider_context()
+    return BufferManager.get_context_buffers()
+end
+
 function M.on_buffer_open(bufnr)
 	if not M.is_aider_running() then
 		return

@@ -8,12 +8,13 @@ function WindowManager.setup()
 end
 
 function WindowManager.show_window(buf, layout)
-	if aider_win and vim.api.nvim_win_is_valid(aider_win) then
-		vim.api.nvim_set_current_win(aider_win)
-		vim.api.nvim_win_set_buf(aider_win, buf)
-	else
-		WindowManager.create_window(buf, layout)
-	end
+    -- If there's an existing window, close it first
+    if aider_win and vim.api.nvim_win_is_valid(aider_win) then
+        WindowManager.hide_aider_window()
+    end
+    
+    -- Create new window
+    WindowManager.create_window(buf, layout)
 end
 
 function WindowManager.create_window(buf, layout)
@@ -53,12 +54,21 @@ end
 
 function WindowManager.hide_aider_window()
     if aider_win and vim.api.nvim_win_is_valid(aider_win) then
-        -- Get the window count before closing
+        -- Store the current window
+        local current_win = vim.api.nvim_get_current_win()
+        
+        -- Focus the Aider window before closing it
+        vim.api.nvim_set_current_win(aider_win)
+        
+        -- Get the window count
         local window_count = vim.fn.winnr('$')
         
-        -- If this is not the last window, close it normally
         if window_count > 1 then
-            pcall(vim.api.nvim_win_close, aider_win, true)
+            -- Close the window and go back to previous window
+            vim.cmd("quit")
+            if vim.api.nvim_win_is_valid(current_win) then
+                vim.api.nvim_set_current_win(current_win)
+            end
         else
             -- If it's the last window, create a new empty buffer first
             vim.cmd('enew')
