@@ -200,20 +200,32 @@ function M.get_aider_context()
 end
 
 function M.on_buffer_open(bufnr)
-	if not M.is_aider_running() then
-		return
-	end
+    local correlation_id = Logger.generate_correlation_id()
+    Logger.debug("on_buffer_open: Processing buffer " .. tostring(bufnr), correlation_id)
 
-	local bufname = vim.api.nvim_buf_get_name(bufnr)
-	local buftype = vim.api.nvim_buf_get_option(bufnr, "buftype")
-	if not bufname or bufname:match("^term://") or buftype == "terminal" then
-		return
-	end
+    if not M.is_aider_running() then
+        Logger.debug("Aider not running, skipping buffer open handling", correlation_id)
+        return
+    end
 
-	local relative_filename = Utils.get_relative_path(bufname)
-	M.queue_commands({ "/add " .. relative_filename }, true)
+    local bufname = vim.api.nvim_buf_get_name(bufnr)
+    local buftype = vim.api.nvim_buf_get_option(bufnr, "buftype")
+    
+    -- Skip special buffers
+    if not bufname or bufname == "" or 
+       bufname:match("^term://") or 
+       buftype == "terminal" or
+       buftype == "nofile" or
+       BufferManager.is_aider_buffer(bufnr) then
+        Logger.debug("Skipping special buffer: " .. tostring(bufname), correlation_id)
+        return
+    end
 
-	Logger.debug("Buffer opened: " .. relative_filename)
+    local relative_filename = Utils.get_relative_path(bufname)
+    Logger.debug("Adding file to context: " .. relative_filename, correlation_id)
+    
+    -- Queue the add command
+    M.queue_commands({ "/add " .. relative_filename }, true)
 end
 
 function M.on_buffer_close(bufnr)
