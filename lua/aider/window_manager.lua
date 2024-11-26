@@ -17,35 +17,32 @@ function WindowManager.show_window(buf, layout)
 end
 
 function WindowManager.create_window(buf, layout)
-	local width = vim.o.columns
-	local height = vim.o.lines
+    if layout == "vsplit" then
+        -- Create a vertical split
+        vim.cmd("botright vsplit")
+        aider_win = vim.api.nvim_get_current_win()
+        vim.api.nvim_win_set_buf(aider_win, buf)
+    elseif layout == "hsplit" then
+        -- Create a horizontal split
+        vim.cmd("botright split")
+        aider_win = vim.api.nvim_get_current_win()
+        vim.api.nvim_win_set_buf(aider_win, buf)
+    else -- float layout
+        local width = vim.o.columns
+        local height = vim.o.lines
 
-	local opts = {
-		style = "minimal",
-		relative = "editor",
-		border = "rounded",
-	}
+        local opts = {
+            style = "minimal",
+            relative = "editor",
+            border = "rounded",
+            width = math.ceil(width * 0.8),
+            height = math.ceil(height * 0.8 - 4),
+            row = math.ceil((height - math.ceil(height * 0.8 - 4)) / 2 - 1),
+            col = math.ceil((width - math.ceil(width * 0.8)) / 2)
+        }
 
-	if layout == "float" then
-		opts.width = math.ceil(width * 0.8)
-		opts.height = math.ceil(height * 0.8 - 4)
-		opts.row = math.ceil((height - opts.height) / 2 - 1)
-		opts.col = math.ceil((width - opts.width) / 2)
-	elseif layout == "vsplit" then
-		opts.width = math.ceil(width / 2)
-		opts.height = height
-		opts.row = 0
-		opts.col = math.ceil(width / 2)
-	elseif layout == "hsplit" then
-		opts.width = width
-		opts.height = math.ceil(height / 2)
-		opts.row = math.ceil(height / 2)
-		opts.col = 0
-	else
-		error("Invalid layout: " .. layout)
-	end
-
-	aider_win = vim.api.nvim_open_win(buf, true, opts)
+        aider_win = vim.api.nvim_open_win(buf, true, opts)
+    end
 	if not aider_win then
 		Logger.error("Failed to create Aider window")
 		vim.notify("Failed to create Aider window", vim.log.levels.ERROR)

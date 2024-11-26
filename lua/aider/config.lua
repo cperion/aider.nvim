@@ -4,7 +4,7 @@ local Logger
 
 local default_config = {
 	auto_manage_context = true,
-	default_layout = "float",
+	default_layout = "vsplit",
 	max_buffer_size = 1000000, -- 1MB
 	keys = {
 		open = "<leader> ",
