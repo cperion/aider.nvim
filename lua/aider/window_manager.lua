@@ -18,38 +18,54 @@ function WindowManager.show_window(buf, layout)
 end
 
 function WindowManager.create_window(buf, layout)
-    if layout == "vsplit" then
-        -- Create a vertical split
-        vim.cmd("botright vsplit")
-        aider_win = vim.api.nvim_get_current_win()
-        vim.api.nvim_win_set_buf(aider_win, buf)
-    elseif layout == "hsplit" then
-        -- Create a horizontal split
-        vim.cmd("botright split")
-        aider_win = vim.api.nvim_get_current_win()
-        vim.api.nvim_win_set_buf(aider_win, buf)
-    else -- float layout
-        local width = vim.o.columns
-        local height = vim.o.lines
+    local correlation_id = Logger.generate_correlation_id()
+    Logger.debug("create_window: Starting with layout " .. tostring(layout), correlation_id)
 
-        local opts = {
-            style = "minimal",
-            relative = "editor",
-            border = "rounded",
-            width = math.ceil(width * 0.8),
-            height = math.ceil(height * 0.8 - 4),
-            row = math.ceil((height - math.ceil(height * 0.8 - 4)) / 2 - 1),
-            col = math.ceil((width - math.ceil(width * 0.8)) / 2)
-        }
-
-        aider_win = vim.api.nvim_open_win(buf, true, opts)
+    if not buf or not vim.api.nvim_buf_is_valid(buf) then
+        vim.notify("Invalid buffer provided to window manager", vim.log.levels.ERROR)
+        Logger.error("Invalid buffer provided", correlation_id)
+        return
     end
-	if not aider_win then
-		Logger.error("Failed to create Aider window")
-		vim.notify("Failed to create Aider window", vim.log.levels.ERROR)
-	else
-		Logger.debug("Aider window created successfully: " .. tostring(aider_win))
-	end
+
+    local ok, err = pcall(function()
+        if layout == "vsplit" then
+            vim.cmd("botright vsplit")
+            aider_win = vim.api.nvim_get_current_win()
+            vim.api.nvim_win_set_buf(aider_win, buf)
+        elseif layout == "hsplit" then
+            vim.cmd("botright split")
+            aider_win = vim.api.nvim_get_current_win()
+            vim.api.nvim_win_set_buf(aider_win, buf)
+        else -- float layout
+            local width = vim.o.columns
+            local height = vim.o.lines
+
+            local opts = {
+                style = "minimal",
+                relative = "editor",
+                border = "rounded",
+                width = math.ceil(width * 0.8),
+                height = math.ceil(height * 0.8 - 4),
+                row = math.ceil((height - math.ceil(height * 0.8 - 4)) / 2 - 1),
+                col = math.ceil((width - math.ceil(width * 0.8)) / 2)
+            }
+
+            aider_win = vim.api.nvim_open_win(buf, true, opts)
+        end
+    end)
+
+    if not ok then
+        vim.notify("Failed to create window: " .. tostring(err), vim.log.levels.ERROR)
+        Logger.error("Window creation failed: " .. tostring(err), correlation_id)
+        return
+    end
+
+    if not aider_win then
+        Logger.error("Failed to create Aider window", correlation_id)
+        vim.notify("Failed to create Aider window", vim.log.levels.ERROR)
+    else
+        Logger.debug("Window created successfully: " .. tostring(aider_win), correlation_id)
+    end
 end
 
 function WindowManager.hide_aider_window()

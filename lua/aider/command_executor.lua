@@ -89,28 +89,40 @@ function M.start_aider(buf, args, initial_context)
 end
 
 function M.update_aider_context()
-	local correlation_id = Logger.generate_correlation_id()
-	Logger.debug("update_aider_context: Starting context update", correlation_id)
+    local correlation_id = Logger.generate_correlation_id()
+    Logger.debug("update_aider_context: Starting context update", correlation_id)
+    
+    if not M.is_aider_running() then
+        vim.notify("Aider is not running", vim.log.levels.DEBUG)
+        Logger.debug("Aider not running, skipping context update", correlation_id)
+        return
+    end
 
-	if M.is_aider_running() then
-		local new_context = BufferManager.get_aider_context()
-		local commands = ContextManager.get_batched_commands()
+    -- Guard against missing functions
+    if not BufferManager.get_context_buffers then
+        vim.notify("Buffer manager not properly initialized", vim.log.levels.ERROR)
+        Logger.error("Buffer manager missing required function", correlation_id)
+        return
+    end
 
-		Logger.info("Updating Aider context", correlation_id)
-		Logger.debug("New context: " .. vim.inspect(new_context), correlation_id)
-		Logger.debug("Generated commands: " .. vim.inspect(commands), correlation_id)
+    local new_context = BufferManager.get_context_buffers()
+    if not new_context then
+        vim.notify("Failed to get buffer context", vim.log.levels.ERROR)
+        Logger.error("Failed to get buffer context", correlation_id)
+        return
+    end
 
-		if #commands > 0 then
-			M.queue_commands(commands, true) -- Set is_context_update to true
-			Logger.debug("Context update commands queued", correlation_id)
-		else
-			Logger.debug("No context update commands to execute", correlation_id)
-		end
-	else
-		Logger.warn("Aider job is not running, context update skipped", correlation_id)
-	end
+    local commands = ContextManager.get_batched_commands()
+    Logger.debug("Generated commands: " .. vim.inspect(commands), correlation_id)
 
-	Logger.debug("update_aider_context: Context update finished", correlation_id)
+    if #commands > 0 then
+        M.queue_commands(commands, true)
+        Logger.debug("Context update commands queued", correlation_id)
+    else
+        Logger.debug("No context update commands to execute", correlation_id)
+    end
+
+    Logger.debug("update_aider_context: Context update finished", correlation_id)
 end
 
 function M.queue_commands(inputs, is_context_update)

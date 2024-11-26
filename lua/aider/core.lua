@@ -83,8 +83,26 @@ end
 
 
 function Aider.on_aider_buffer_enter()
-	BufferManager.update_context()
-	CommandExecutor.update_aider_context()
+    local correlation_id = Logger.generate_correlation_id()
+    Logger.debug("on_aider_buffer_enter: Starting", correlation_id)
+
+    if not BufferManager or not CommandExecutor then
+        vim.notify("Core components not initialized", vim.log.levels.ERROR)
+        Logger.error("Missing core components", correlation_id)
+        return
+    end
+
+    local ok, err = pcall(function()
+        BufferManager.update_context()
+        CommandExecutor.update_aider_context()
+    end)
+
+    if not ok then
+        vim.notify("Error in buffer enter handler: " .. tostring(err), vim.log.levels.ERROR)
+        Logger.error("Buffer enter handler failed: " .. tostring(err), correlation_id)
+    end
+
+    Logger.debug("on_aider_buffer_enter: Complete", correlation_id)
 end
 
 function Aider.setup_keybindings()
