@@ -64,33 +64,42 @@ function BufferManager.is_aider_buffer(buf)
 	return buf == aider_buf
 end
 
-function BufferManager.get_context_buffers()
-    local context_buffers = {}
+function BufferManager.get_active_buffers()
+    local valid_buffers = {}
     for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-        if vim.api.nvim_buf_is_valid(buf) and BufferManager.should_include_in_context(buf) then
-            table.insert(context_buffers, vim.api.nvim_buf_get_name(buf))
+        if BufferManager.should_include_in_context(buf) then
+            local bufname = vim.api.nvim_buf_get_name(buf)
+            table.insert(valid_buffers, bufname)
         end
     end
-    return context_buffers
+    return valid_buffers
+end
+
+function BufferManager.get_context_buffers()
+    return BufferManager.get_active_buffers()
 end
 
 function BufferManager.should_include_in_context(buf)
-	local bufname = vim.api.nvim_buf_get_name(buf)
-	local buftype = vim.api.nvim_get_option_value("buftype", { buf = buf })
-	local filetype = vim.api.nvim_get_option_value("filetype", { buf = buf })
-	local filesize = vim.fn.getfsize(bufname)
-	
-	return bufname ~= ""
-		and not bufname:match("^term://")
-		and not bufname:match("^fugitive://")
-		and buftype ~= "terminal"
-		and buftype ~= "nofile"
-		and buftype ~= "quickfix"
-		and filetype ~= "help"
-		and not BufferManager.is_aider_buffer(buf)
-		and vim.fn.filereadable(bufname) == 1
-		and filesize > 0
-		and filesize < config.get("max_context_file_size")
+    local bufname = vim.api.nvim_buf_get_name(buf)
+    local buftype = vim.api.nvim_get_option_value("buftype", { buf = buf })
+    local filetype = vim.api.nvim_get_option_value("filetype", { buf = buf })
+    local filesize = vim.fn.getfsize(bufname)
+    local buflisted = vim.api.nvim_get_option_value("buflisted", { buf = buf })
+    local hidden = vim.api.nvim_get_option_value("bufhidden", { buf = buf })
+    
+    -- Check if buffer is a regular listed buffer that should be included
+    local is_regular_buffer = buflisted 
+        and hidden ~= "delete"
+        and buftype == ""  -- Only regular files
+        and not BufferManager.is_aider_buffer(buf)
+    
+    -- Only include files that exist and are within size limits
+    local is_valid_file = bufname ~= ""
+        and vim.fn.filereadable(bufname) == 1
+        and filesize > 0
+        and filesize < config.get("max_context_file_size")
+    
+    return is_regular_buffer and is_valid_file
 end
 
 function BufferManager.update_context()

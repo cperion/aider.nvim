@@ -7,12 +7,22 @@ local M = {}
 function M.setup()
     local aider_group = vim.api.nvim_create_augroup("Aider", { clear = true })
 
-    vim.api.nvim_create_autocmd({ "BufAdd", "BufDelete" }, {
+    -- Monitor buffer state changes
+    vim.api.nvim_create_autocmd({
+        "BufAdd",
+        "BufDelete",
+        "BufEnter",
+        "BufFilePost",  -- Catches file renames
+        "BufWipeout"
+    }, {
         group = aider_group,
         callback = function(ev)
-            if BufferManager.should_include_in_context(ev.buf) then
-                vim.schedule(BufferManager.update_context)
-            end
+            -- Small delay to ensure buffer state is settled
+            vim.defer_fn(function()
+                if BufferManager.should_include_in_context(ev.buf) then
+                    BufferManager.update_context()
+                end
+            end, 50)
         end,
     })
 
