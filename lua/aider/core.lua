@@ -28,13 +28,17 @@ function Aider.open(args, layout)
 	local correlation_id = Logger.generate_correlation_id()
 	Logger.debug("Opening Aider window", correlation_id)
 
+	-- Combine default args with provided args
+	local default_args = config.get("aider_args") or ""
+	local final_args = args and (default_args .. " " .. args) or default_args
+
 	local buf = BufferManager.get_aider_buffer()
 	local used_layout = layout or current_layout
 	WindowManager.show_window(buf, used_layout)
 
 	-- Get initial context and start Aider in one step
 	local initial_context = BufferManager.get_context_buffers()
-	CommandExecutor.start_aider(buf, args, initial_context)
+	CommandExecutor.start_aider(buf, final_args, initial_context)
 
 	Logger.debug("Aider window opened", correlation_id)
 end

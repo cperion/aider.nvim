@@ -6,6 +6,7 @@ local default_config = {
 	auto_manage_context = true,
 	default_layout = "vsplit",
 	max_buffer_size = 1000000, -- 1MB
+	aider_args = "", -- Default CLI arguments for Aider
 	keys = {
 		open = "<leader>ao",
 		toggle = "<leader>at",
