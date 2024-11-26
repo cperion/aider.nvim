@@ -29,54 +29,61 @@ function M.is_aider_running()
 end
 
 function M.start_aider(buf, args, initial_context)
-	local correlation_id = Logger.generate_correlation_id()
-	args = args or ""
-	initial_context = initial_context or {}
+    local correlation_id = Logger.generate_correlation_id()
+    args = args or ""
+    initial_context = initial_context or {}
 
-	Logger.debug("start_aider: Starting with buffer " .. tostring(buf) .. " and args: " .. args, correlation_id)
-	Logger.debug("start_aider: Initial context: " .. vim.inspect(initial_context), correlation_id)
+    Logger.debug("start_aider: Starting with buffer " .. tostring(buf) .. " and args: " .. args, correlation_id)
+    Logger.debug("start_aider: Initial context: " .. vim.inspect(initial_context), correlation_id)
 
-	-- Ensure buffer is empty and unmodified
-	vim.api.nvim_buf_set_option(buf, "modified", false)
-	vim.api.nvim_buf_set_lines(buf, 0, -1, false, {})
+    -- Create a new buffer specifically for the terminal
+    local term_buf = vim.api.nvim_create_buf(false, true)
+    
+    -- Set buffer options
+    vim.api.nvim_buf_set_option(term_buf, "buftype", "terminal")
+    vim.api.nvim_buf_set_option(term_buf, "buflisted", true)
+    
+    -- Switch the window to the new terminal buffer
+    vim.api.nvim_win_set_buf(0, term_buf)
 
-	-- Construct the command
-	local command = "aider " .. args
+    -- Construct the command
+    local command = "aider " .. args
 
-	-- Add each file from the initial context to the command, properly escaped
-	for _, file in ipairs(initial_context) do
-		command = command .. " " .. vim.fn.shellescape(file)
-	end
+    -- Add each file from the initial context to the command, properly escaped
+    for _, file in ipairs(initial_context) do
+        command = command .. " " .. vim.fn.shellescape(file)
+    end
 
-	Logger.info("Starting Aider", correlation_id)
-	Logger.debug("Command: " .. command, correlation_id)
+    Logger.info("Starting Aider", correlation_id)
+    Logger.debug("Command: " .. command, correlation_id)
 
-	-- Start the job using vim.fn.termopen and store the job ID
-	aider_job_id = vim.fn.termopen(command, {
-		on_exit = function(job_id, exit_code, event_type)
-			M.on_aider_exit(exit_code)
-		end,
-	})
+    -- Start the job using vim.fn.termopen and store the job ID
+    aider_job_id = vim.fn.termopen(command, {
+        on_exit = function(job_id, exit_code, event_type)
+            M.on_aider_exit(exit_code)
+        end,
+    })
 
-	if aider_job_id <= 0 then
-		Logger.error("Failed to start Aider job. Job ID: " .. tostring(aider_job_id), correlation_id)
-		return
-	end
+    if aider_job_id <= 0 then
+        Logger.error("Failed to start Aider job. Job ID: " .. tostring(aider_job_id), correlation_id)
+        return
+    end
 
-	Logger.debug("Aider job started with job_id: " .. tostring(aider_job_id), correlation_id)
+    Logger.debug("Aider job started with job_id: " .. tostring(aider_job_id), correlation_id)
 
-	aider_buf = buf
-	ContextManager.update(initial_context)
-	Logger.debug("Context updated", correlation_id)
+    -- Update the aider_buf to be the terminal buffer
+    aider_buf = term_buf
+    ContextManager.update(initial_context)
+    Logger.debug("Context updated", correlation_id)
 
-	Logger.info("Aider started successfully", correlation_id)
+    Logger.info("Aider started successfully", correlation_id)
 
-	-- Scroll to the bottom after starting Aider if auto_scroll is enabled
-	if config.get("auto_scroll") then
-		vim.schedule(function()
-			M.scroll_to_bottom()
-		end)
-	end
+    -- Scroll to the bottom after starting Aider if auto_scroll is enabled
+    if config.get("auto_scroll") then
+        vim.schedule(function()
+            M.scroll_to_bottom()
+        end)
+    end
 end
 
 function M.update_aider_context()
