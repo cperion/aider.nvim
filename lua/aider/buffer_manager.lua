@@ -58,13 +58,15 @@ function BufferManager.get_or_create_aider_buffer()
     -- Set initial buffer options
     vim.api.nvim_buf_set_name(buf, "Aider")
     vim.api.nvim_buf_set_option(buf, "swapfile", false)
-    vim.api.nvim_buf_set_option(buf, "buflisted", true)
+    vim.api.nvim_buf_set_option(buf, "buflisted", false)  -- Hide from bufferline
+    vim.api.nvim_buf_set_option(buf, "buftype", "nofile")
+    vim.api.nvim_buf_set_option(buf, "filetype", "aider")
 
     aider_buf = buf
     
-    -- Set up the 'q' keybinding for the Aider buffer
+    -- Set up the 'q' keybinding for the Aider buffer to just hide the window
     vim.keymap.set("n", "q", function()
-        require("aider.core").toggle()
+        require("aider.window_manager").hide_aider_window()
     end, { silent = true, buffer = buf })
     
     return buf
