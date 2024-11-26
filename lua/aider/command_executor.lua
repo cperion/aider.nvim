@@ -283,19 +283,38 @@ function M.on_buffer_open(bufnr)
 end
 
 function M.on_buffer_close(bufnr)
-	if not M.is_aider_running() then
-		return
-	end
+    local correlation_id = Logger.generate_correlation_id()
+    Logger.debug("on_buffer_close: Processing buffer " .. tostring(bufnr), correlation_id)
 
-	local bufname = vim.api.nvim_buf_get_name(bufnr)
-	if not bufname or bufname:match("^term://") then
-		return
-	end
+    if not M.is_aider_running() then
+        Logger.debug("Aider not running, skipping buffer close handling", correlation_id)
+        return
+    end
 
-	local relative_filename = Utils.get_relative_path(bufname)
-	M.queue_commands({ "/drop " .. relative_filename }, true)
+    -- Get buffer info before it's deleted
+    local bufname = vim.api.nvim_buf_get_name(bufnr)
+    local buftype = vim.api.nvim_buf_get_option(bufnr, "buftype")
+    
+    -- Skip special buffers
+    if not bufname or bufname == "" or 
+       bufname:match("^term://") or 
+       buftype == "terminal" or
+       buftype == "nofile" or
+       BufferManager.is_aider_buffer(bufnr) then
+        Logger.debug("Skipping special buffer: " .. tostring(bufname), correlation_id)
+        return
+    end
 
-	Logger.debug("Buffer closed: " .. relative_filename)
+    local relative_filename = Utils.get_relative_path(bufname)
+    Logger.debug("Dropping file from context: " .. relative_filename, correlation_id)
+    
+    -- Queue the drop command with high priority
+    M.queue_commands({ "/drop " .. relative_filename }, true)
+    
+    -- Process the command queue immediately
+    vim.schedule(function()
+        M.process_command_queue()
+    end)
 end
 
 function M.on_aider_exit(exit_code)
