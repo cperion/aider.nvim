@@ -61,6 +61,12 @@ function BufferManager.get_or_create_aider_buffer()
     vim.api.nvim_buf_set_option(buf, "buflisted", true)
 
     aider_buf = buf
+    
+    -- Set up the 'q' keybinding for the Aider buffer
+    vim.keymap.set("n", "q", function()
+        require("aider.core").toggle()
+    end, { silent = true, buffer = buf })
+    
     return buf
 end
 

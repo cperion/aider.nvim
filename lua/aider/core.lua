@@ -93,15 +93,6 @@ function Aider.setup_keybindings()
 		require("aider.core").toggle()
 	end, { silent = true })
 
-	-- Add this new keybinding
-	vim.keymap.set("n", "q", function()
-		if BufferManager.is_aider_buffer(vim.api.nvim_get_current_buf()) then
-			require("aider.core").toggle()
-		else
-			-- Pass through the 'q' key if not in Aider buffer
-			vim.api.nvim_feedkeys('q', 'n', false)
-		end
-	end, { silent = true, buffer = BufferManager.get_aider_buffer() })
 end
 
 function Aider.mass_sync_context()
