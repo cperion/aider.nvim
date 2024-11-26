@@ -47,18 +47,15 @@ function Aider.toggle(args, layout)
     if is_open then
         WindowManager.hide_aider_window()
     else
-        -- Check if Aider is already running
-        if CommandExecutor.is_aider_running() then
-            -- Just show the existing buffer in a window
-            local buf = BufferManager.get_aider_buffer()
-            local used_layout = layout or config.get("default_layout") or current_layout
-            WindowManager.show_window(buf, used_layout)
-        else
-            -- Start a new Aider instance
-            local buf = BufferManager.get_aider_buffer()
-            local used_layout = layout or config.get("default_layout") or current_layout
-            WindowManager.show_window(buf, used_layout)
-
+        -- Get existing buffer or create new one
+        local buf = BufferManager.get_aider_buffer()
+        local used_layout = layout or config.get("default_layout") or current_layout
+        
+        -- Show window with existing buffer
+        WindowManager.show_window(buf, used_layout)
+        
+        -- Only start Aider if it's not already running
+        if not CommandExecutor.is_aider_running() then
             local aider_args = args or config.get("aider_args") or ""
             CommandExecutor.start_aider(buf, aider_args, {})
             Logger.debug("Aider started with args: " .. aider_args, correlation_id)

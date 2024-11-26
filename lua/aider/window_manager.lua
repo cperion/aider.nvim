@@ -8,12 +8,16 @@ function WindowManager.setup()
 end
 
 function WindowManager.show_window(buf, layout)
-    -- If there's an existing window, close it first
+    local correlation_id = Logger.generate_correlation_id()
+    Logger.debug("show_window: Starting with layout " .. tostring(layout), correlation_id)
+
+    -- If there's an existing window, just focus it
     if aider_win and vim.api.nvim_win_is_valid(aider_win) then
-        WindowManager.hide_aider_window()
+        vim.api.nvim_set_current_win(aider_win)
+        return
     end
     
-    -- Create new window
+    -- Create new window only if one doesn't exist
     WindowManager.create_window(buf, layout)
 end
 
@@ -89,8 +93,10 @@ function WindowManager.hide_aider_window()
             -- If it's the last window, create a new empty buffer first
             vim.cmd('enew')
         end
+        
+        -- Clear the window reference
+        aider_win = nil
     end
-    aider_win = nil
 end
 
 function WindowManager.is_window_open()
