@@ -12,8 +12,24 @@ end
 function BufferManager.get_valid_buffers()
     local valid_buffers = {}
     for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-        if vim.api.nvim_buf_is_valid(buf) and BufferManager.should_include_in_context(buf) then
-            local bufname = vim.api.nvim_buf_get_name(buf)
+        -- Skip if buffer number is invalid
+        if not buf or type(buf) ~= "number" then
+            goto continue
+        end
+        
+        -- Skip if buffer is not valid
+        if not vim.api.nvim_buf_is_valid(buf) then
+            goto continue
+        end
+        
+        -- Try to get buffer info safely
+        local ok, bufname = pcall(vim.api.nvim_buf_get_name, buf)
+        if not ok or not bufname then
+            goto continue
+        end
+        
+        -- Only proceed if the buffer should be included
+        if BufferManager.should_include_in_context(buf) then
             table.insert(valid_buffers, {
                 id = buf,
                 name = bufname,
@@ -21,6 +37,8 @@ function BufferManager.get_valid_buffers()
                 modified = vim.api.nvim_buf_get_option(buf, "modified"),
             })
         end
+        
+        ::continue::
     end
     return valid_buffers
 end
@@ -80,23 +98,35 @@ function BufferManager.get_context_buffers()
 end
 
 function BufferManager.should_include_in_context(buf)
-    -- First check if the buffer is valid
-    if not buf or not vim.api.nvim_buf_is_valid(buf) then
+    -- Early validation of buffer
+    if not buf or type(buf) ~= "number" then
         return false
     end
-
-    -- Safely get buffer properties with pcall
+    
+    -- Check if buffer is valid
+    if not vim.api.nvim_buf_is_valid(buf) then
+        return false
+    end
+    
+    -- Safely get buffer properties
     local ok, bufname = pcall(vim.api.nvim_buf_get_name, buf)
-    if not ok then return false end
-
+    if not ok or not bufname then
+        return false
+    end
+    
     local ok_type, buftype = pcall(vim.api.nvim_get_option_value, "buftype", { buf = buf })
     if not ok_type then return false end
-
+    
     local ok_listed, buflisted = pcall(vim.api.nvim_get_option_value, "buflisted", { buf = buf })
     if not ok_listed then return false end
-
+    
     local ok_hidden, hidden = pcall(vim.api.nvim_get_option_value, "bufhidden", { buf = buf })
     if not ok_hidden then return false end
+    
+    -- Only proceed if we have all required properties
+    if not (buftype and buflisted and hidden) then
+        return false
+    end
 
     local filesize = vim.fn.getfsize(bufname)
     
