@@ -58,10 +58,14 @@ function BufferManager.get_or_create_aider_buffer()
 
     -- Set initial buffer options
     vim.api.nvim_buf_set_name(buf, "Aider")
-    vim.api.nvim_buf_set_option(buf, "swapfile", false)
-    vim.api.nvim_buf_set_option(buf, "buflisted", false)  -- Hide from bufferline
-    vim.api.nvim_buf_set_option(buf, "buftype", "terminal")
-    vim.api.nvim_buf_set_option(buf, "filetype", "aider")
+    
+    -- Only set these options if the buffer is valid
+    if vim.api.nvim_buf_is_valid(buf) then
+        -- These are the safe buffer options we can set
+        vim.api.nvim_buf_set_option(buf, "swapfile", false)
+        vim.api.nvim_buf_set_option(buf, "bufhidden", "hide")
+        vim.api.nvim_buf_set_option(buf, "buflisted", false)
+    end
 
     aider_buf = buf
     
