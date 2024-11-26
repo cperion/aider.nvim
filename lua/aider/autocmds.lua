@@ -19,7 +19,13 @@ function M.setup()
         callback = function(ev)
             -- Small delay to ensure buffer state is settled
             vim.defer_fn(function()
-                if BufferManager.should_include_in_context(ev.buf) then
+                -- Check if buffer still exists before processing
+                if vim.api.nvim_buf_is_valid(ev.buf) then
+                    if BufferManager.should_include_in_context(ev.buf) then
+                        BufferManager.update_context()
+                    end
+                else
+                    -- Buffer was deleted, update context anyway
                     BufferManager.update_context()
                 end
             end, 50)

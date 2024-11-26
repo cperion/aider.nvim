@@ -80,12 +80,25 @@ function BufferManager.get_context_buffers()
 end
 
 function BufferManager.should_include_in_context(buf)
-    local bufname = vim.api.nvim_buf_get_name(buf)
-    local buftype = vim.api.nvim_get_option_value("buftype", { buf = buf })
-    local filetype = vim.api.nvim_get_option_value("filetype", { buf = buf })
+    -- First check if the buffer is valid
+    if not buf or not vim.api.nvim_buf_is_valid(buf) then
+        return false
+    end
+
+    -- Safely get buffer properties with pcall
+    local ok, bufname = pcall(vim.api.nvim_buf_get_name, buf)
+    if not ok then return false end
+
+    local ok_type, buftype = pcall(vim.api.nvim_get_option_value, "buftype", { buf = buf })
+    if not ok_type then return false end
+
+    local ok_listed, buflisted = pcall(vim.api.nvim_get_option_value, "buflisted", { buf = buf })
+    if not ok_listed then return false end
+
+    local ok_hidden, hidden = pcall(vim.api.nvim_get_option_value, "bufhidden", { buf = buf })
+    if not ok_hidden then return false end
+
     local filesize = vim.fn.getfsize(bufname)
-    local buflisted = vim.api.nvim_get_option_value("buflisted", { buf = buf })
-    local hidden = vim.api.nvim_get_option_value("bufhidden", { buf = buf })
     
     -- Check if buffer is a regular listed buffer that should be included
     local is_regular_buffer = buflisted 
