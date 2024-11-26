@@ -12,17 +12,10 @@ function M.setup()
         "BufAdd",
         "BufDelete",
         "BufEnter",
-        "BufFilePost",  -- Catches file renames
-        "BufWipeout"
+        "BufFilePost",
     }, {
         group = aider_group,
-        callback = function(ev)
-            -- Validate buffer number
-            if not ev.buf or type(ev.buf) ~= "number" then
-                return
-            end
-            
-            -- Update context without checking specific buffer
+        callback = function()
             vim.defer_fn(function()
                 BufferManager.update_context()
             end, 50)

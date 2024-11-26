@@ -44,34 +44,34 @@ function BufferManager.get_valid_buffers()
 end
 
 function BufferManager.get_or_create_aider_buffer()
-	if aider_buf and vim.api.nvim_buf_is_valid(aider_buf) then
-		return aider_buf
-	else
-		aider_buf = vim.api.nvim_create_buf(false, true)
-		if not aider_buf then
-			vim.notify("Failed to create Aider buffer", vim.log.levels.ERROR)
-			return nil
-		end
-		vim.api.nvim_buf_set_name(aider_buf, "Aider")
-		
-		-- Set buffer options
-		vim.api.nvim_set_option_value("buftype", "nofile", { buf = aider_buf })
-		vim.api.nvim_set_option_value("bufhidden", "hide", { buf = aider_buf })
-		vim.api.nvim_set_option_value("swapfile", false, { buf = aider_buf })
-		vim.api.nvim_set_option_value("buflisted", false, { buf = aider_buf })
-		vim.api.nvim_set_option_value("modifiable", true, { buf = aider_buf })
+    if aider_buf and vim.api.nvim_buf_is_valid(aider_buf) then
+        return aider_buf
+    end
 
-		-- Add the 'q' keybinding for the Aider buffer
-		vim.api.nvim_buf_set_keymap(
-			aider_buf,
-			"n",
-			"q",
-			'<cmd>lua require("aider.core").toggle()<CR>',
-			{ silent = true }
-		)
+    -- Create new buffer
+    aider_buf = vim.api.nvim_create_buf(false, true)
+    if not aider_buf then
+        Logger.error("Failed to create Aider buffer")
+        return nil
+    end
 
-		return aider_buf
-	end
+    -- Set buffer name and options
+    vim.api.nvim_buf_set_name(aider_buf, "Aider")
+    vim.api.nvim_buf_set_option(aider_buf, "buftype", "nofile")
+    vim.api.nvim_buf_set_option(aider_buf, "swapfile", false)
+    vim.api.nvim_buf_set_option(aider_buf, "buflisted", true)  -- Changed to true
+    vim.api.nvim_buf_set_option(aider_buf, "modifiable", true)
+
+    -- Add the 'q' keybinding
+    vim.api.nvim_buf_set_keymap(
+        aider_buf,
+        "n",
+        "q",
+        '<cmd>lua require("aider.core").toggle()<CR>',
+        { silent = true }
+    )
+
+    return aider_buf
 end
 
 function BufferManager.get_aider_buffer()
@@ -98,51 +98,40 @@ function BufferManager.get_context_buffers()
 end
 
 function BufferManager.should_include_in_context(buf)
-    -- Early validation of buffer
-    if not buf or type(buf) ~= "number" then
-        return false
-    end
-    
-    -- Check if buffer is valid
-    if not vim.api.nvim_buf_is_valid(buf) then
-        return false
-    end
-    
-    -- Safely get buffer properties
-    local ok, bufname = pcall(vim.api.nvim_buf_get_name, buf)
-    if not ok or not bufname then
-        return false
-    end
-    
-    local ok_type, buftype = pcall(vim.api.nvim_get_option_value, "buftype", { buf = buf })
-    if not ok_type then return false end
-    
-    local ok_listed, buflisted = pcall(vim.api.nvim_get_option_value, "buflisted", { buf = buf })
-    if not ok_listed then return false end
-    
-    local ok_hidden, hidden = pcall(vim.api.nvim_get_option_value, "bufhidden", { buf = buf })
-    if not ok_hidden then return false end
-    
-    -- Only proceed if we have all required properties
-    if not (buftype and buflisted and hidden) then
+    -- Skip invalid buffers
+    if not buf or not vim.api.nvim_buf_is_valid(buf) then
         return false
     end
 
+    -- Get buffer name safely
+    local ok, bufname = pcall(vim.api.nvim_buf_get_name, buf)
+    if not ok or bufname == "" then
+        return false
+    end
+
+    -- Skip special buffers and Aider buffer
+    if BufferManager.is_aider_buffer(buf) then
+        return false
+    end
+
+    -- Get buffer type safely
+    local ok_type, buftype = pcall(vim.api.nvim_buf_get_option, buf, "buftype")
+    if not ok_type or buftype ~= "" then  -- Only include normal buffers
+        return false
+    end
+
+    -- Check if it's a real file
+    if vim.fn.filereadable(bufname) ~= 1 then
+        return false
+    end
+
+    -- Check file size
     local filesize = vim.fn.getfsize(bufname)
-    
-    -- Check if buffer is a regular listed buffer that should be included
-    local is_regular_buffer = buflisted 
-        and hidden ~= "delete"
-        and buftype == ""  -- Only regular files
-        and not BufferManager.is_aider_buffer(buf)
-    
-    -- Only include files that exist and are within size limits
-    local is_valid_file = bufname ~= ""
-        and vim.fn.filereadable(bufname) == 1
-        and filesize > 0
-        and filesize < config.get("max_context_file_size")
-    
-    return is_regular_buffer and is_valid_file
+    if filesize <= 0 or filesize >= config.get("max_context_file_size") then
+        return false
+    end
+
+    return true
 end
 
 function BufferManager.update_context()
