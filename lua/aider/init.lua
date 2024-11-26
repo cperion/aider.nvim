@@ -9,6 +9,11 @@ function M.setup(user_config)
 	config.setup(user_config)
 	Logger.debug("Config setup complete")
 
+	-- Set up additional keymaps
+	vim.keymap.set('n', '<leader>as', function()
+		require('aider').mass_sync_context()
+	end, { desc = "Sync Aider context" })
+
 	-- Defer the core setup to avoid circular dependency
 	vim.defer_fn(function()
 		local Aider = require("aider.core")

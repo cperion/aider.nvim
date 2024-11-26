@@ -7,11 +7,13 @@ local default_config = {
 	default_layout = "vsplit",
 	max_buffer_size = 1000000, -- 1MB
 	keys = {
-		open = "<leader> ",
+		open = "<leader>ao",
 		toggle = "<leader>at",
 	},
-	log_level = vim.log.levels.INFO,
-	log_file = nil, -- Set to a file path to enable file logging
+	log = {
+		level = "INFO",
+		file = nil, -- Will be set to default in setup if not provided
+	},
 	auto_scroll = true,
 	max_context_file_size = 1024 * 1024, -- 1MB
 }
@@ -20,6 +22,16 @@ local user_config = {}
 
 function Config.setup(opts)
 	user_config = vim.tbl_deep_extend("force", {}, default_config, opts or {})
+	
+	-- Set default log file if not provided
+	if not user_config.log.file then
+		user_config.log.file = vim.fn.stdpath("cache") .. "/aider.log"
+	end
+	
+	-- Convert log level to vim.log.levels and set legacy fields for compatibility
+	user_config.log_level = vim.log.levels[user_config.log.level] or vim.log.levels.INFO
+	user_config.log_file = user_config.log.file
+	
 	Logger = require("aider.logger")
 	Logger.setup()
 	Logger.debug("Config setup complete. User config: " .. vim.inspect(user_config))
