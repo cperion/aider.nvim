@@ -1,5 +1,5 @@
-[2024-11-25 21:32:34] DEBUG: Logger setup complete
-[2024-11-25 21:32:34] DEBUG: Config setup complete. User config: {
+[2024-11-26 13:01:56] DEBUG: Logger setup complete
+[2024-11-26 13:01:56] DEBUG: Config setup complete. User config: {
   auto_manage_context = true,
   auto_scroll = true,
   default_layout = "vsplit",
@@ -12,56 +12,71 @@
   max_buffer_size = 1000000,
   max_context_file_size = 1048576
 }
-[2024-11-25 21:32:34] DEBUG: Config setup complete
-[2024-11-25 21:32:34] DEBUG: Aider setup finished
-[2024-11-25 21:32:34] DEBUG: Toggling Aider window. Current state: closed [CorrelationID: a4606751]
-[2024-11-25 21:32:34] DEBUG: Aider window created successfully: 1083
-[2024-11-25 21:32:34] DEBUG: start_aider: Starting with buffer 28 and args: --architect --no-auto-lint --light-mode [CorrelationID: 8f318488]
-[2024-11-25 21:32:34] DEBUG: start_aider: Initial context: {} [CorrelationID: 8f318488]
-[2024-11-25 21:32:34] INFO: Starting Aider [CorrelationID: 8f318488]
-[2024-11-25 21:32:34] DEBUG: Command: aider --architect --no-auto-lint --light-mode [CorrelationID: 8f318488]
-[2024-11-25 21:32:34] DEBUG: Aider job started with job_id: 4 [CorrelationID: 8f318488]
-[2024-11-25 21:32:34] DEBUG: ContextManager.update: Starting context update [CorrelationID: bb14a831]
-[2024-11-25 21:32:34] DEBUG: Current context: {} [CorrelationID: bb14a831]
-[2024-11-25 21:32:34] DEBUG: New context: {} [CorrelationID: bb14a831]
-[2024-11-25 21:32:34] DEBUG: Pending changes: {
+[2024-11-26 13:01:56] DEBUG: Config setup complete
+[2024-11-26 13:01:56] DEBUG: Aider setup finished
+[2024-11-26 13:01:56] DEBUG: Toggling Aider window. Current state: closed [CorrelationID: d4f7a068]
+[2024-11-26 13:01:56] DEBUG: Aider window created successfully: 1004
+[2024-11-26 13:01:56] DEBUG: start_aider: Starting with buffer 7 and args: --architect --no-auto-lint --light-mode [CorrelationID: bea37de0]
+[2024-11-26 13:01:56] DEBUG: start_aider: Initial context: {} [CorrelationID: bea37de0]
+[2024-11-26 13:01:56] INFO: Starting Aider [CorrelationID: bea37de0]
+[2024-11-26 13:01:56] DEBUG: Command: aider --architect --no-auto-lint --light-mode [CorrelationID: bea37de0]
+[2024-11-26 13:01:56] DEBUG: Aider job started with job_id: 3 [CorrelationID: bea37de0]
+[2024-11-26 13:01:56] DEBUG: ContextManager.update: Starting context update [CorrelationID: b3cf6a50]
+[2024-11-26 13:01:56] DEBUG: Current context: {} [CorrelationID: b3cf6a50]
+[2024-11-26 13:01:56] DEBUG: New context: {} [CorrelationID: b3cf6a50]
+[2024-11-26 13:01:56] DEBUG: Pending changes: {
   add = {},
   drop = {}
-} [CorrelationID: bb14a831]
-[2024-11-25 21:32:34] DEBUG: ContextManager.update: Context update complete [CorrelationID: bb14a831]
-[2024-11-25 21:32:34] DEBUG: Context updated [CorrelationID: 8f318488]
-[2024-11-25 21:32:34] INFO: Aider started successfully [CorrelationID: 8f318488]
-[2024-11-25 21:32:34] DEBUG: Aider started with args: --architect --no-auto-lint --light-mode [CorrelationID: a4606751]
-[2024-11-25 21:32:34] DEBUG: New state: open [CorrelationID: a4606751]
-[2024-11-25 21:32:34] DEBUG: Aider.setup: Starting Aider setup
-[2024-11-25 21:32:34] DEBUG: Aider.setup: WindowManager setup complete
-[2024-11-25 21:32:34] DEBUG: Updating context [CorrelationID: e93dd069]
-[2024-11-25 21:32:34] DEBUG: Current context: {} [CorrelationID: e93dd069]
-[2024-11-25 21:32:34] DEBUG: New context: { "/home/cperion_ext/dev/zroom/starter.md", "/home/cperion_ext/dev/zroom/INSTRUCTIONS.MD" } [CorrelationID: e93dd069]
-[2024-11-25 21:32:34] DEBUG: Context changed, updating Aider [CorrelationID: e93dd069]
-[2024-11-25 21:32:34] DEBUG: ContextManager.update: Starting context update [CorrelationID: ab8c39b7]
-[2024-11-25 21:32:34] DEBUG: Current context: {} [CorrelationID: ab8c39b7]
-[2024-11-25 21:32:34] DEBUG: New context: { "/home/cperion_ext/dev/zroom/starter.md", "/home/cperion_ext/dev/zroom/INSTRUCTIONS.MD" } [CorrelationID: ab8c39b7]
-[2024-11-25 21:32:34] DEBUG: Pending changes: {
+} [CorrelationID: b3cf6a50]
+[2024-11-26 13:01:56] DEBUG: ContextManager.update: Context update complete [CorrelationID: b3cf6a50]
+[2024-11-26 13:01:56] DEBUG: Context updated [CorrelationID: bea37de0]
+[2024-11-26 13:01:56] INFO: Aider started successfully [CorrelationID: bea37de0]
+[2024-11-26 13:01:56] DEBUG: Aider started with args: --architect --no-auto-lint --light-mode [CorrelationID: d4f7a068]
+[2024-11-26 13:01:56] DEBUG: New state: open [CorrelationID: d4f7a068]
+[2024-11-26 13:01:56] DEBUG: Aider.setup: Starting Aider setup
+[2024-11-26 13:01:56] DEBUG: Aider.setup: WindowManager setup complete
+[2024-11-26 13:01:56] DEBUG: Updating context [CorrelationID: ee07b30e]
+[2024-11-26 13:01:56] DEBUG: Current context: {} [CorrelationID: ee07b30e]
+[2024-11-26 13:01:56] DEBUG: New context: { "/home/cperion_ext/dev/aider.nvim/lua/aider/context_manager.lua", "/home/cperion_ext/dev/aider.nvim/lua/aider/logger.lua" } [CorrelationID: ee07b30e]
+[2024-11-26 13:01:56] DEBUG: Context changed, updating Aider [CorrelationID: ee07b30e]
+[2024-11-26 13:01:56] DEBUG: ContextManager.update: Starting context update [CorrelationID: a897e5ac]
+[2024-11-26 13:01:56] DEBUG: Current context: {} [CorrelationID: a897e5ac]
+[2024-11-26 13:01:56] DEBUG: New context: { "/home/cperion_ext/dev/aider.nvim/lua/aider/context_manager.lua", "/home/cperion_ext/dev/aider.nvim/lua/aider/logger.lua" } [CorrelationID: a897e5ac]
+[2024-11-26 13:01:56] DEBUG: Pending changes: {
   add = {
-    ["/home/cperion_ext/dev/zroom/INSTRUCTIONS.MD"] = true,
-    ["/home/cperion_ext/dev/zroom/starter.md"] = true
+    ["/home/cperion_ext/dev/aider.nvim/lua/aider/context_manager.lua"] = true,
+    ["/home/cperion_ext/dev/aider.nvim/lua/aider/logger.lua"] = true
   },
   drop = {}
-} [CorrelationID: ab8c39b7]
-[2024-11-25 21:32:34] DEBUG: ContextManager.update: Context update complete [CorrelationID: ab8c39b7]
-[2024-11-25 21:32:34] DEBUG: ContextManager.get_batched_commands: Starting command generation [CorrelationID: 224d1a1b]
-[2024-11-25 21:32:34] DEBUG: Generated commands: { "/add starter.md INSTRUCTIONS.MD" } [CorrelationID: 224d1a1b]
-[2024-11-25 21:32:34] DEBUG: Context update inputs sent to Aider: { "/add starter.md INSTRUCTIONS.MD" }
-[2024-11-25 21:32:34] DEBUG: Context update operation took 0.985 ms [CorrelationID: e93dd069]
-[2024-11-25 21:32:34] DEBUG: Aider.setup: BufferManager setup complete
-[2024-11-25 21:32:34] DEBUG: Aider.setup: CommandExecutor setup complete
-[2024-11-25 21:32:34] DEBUG: Aider.setup: Autocommands setup complete
-[2024-11-25 21:32:34] DEBUG: Aider.setup: Keybindings setup complete
-[2024-11-25 21:32:34] DEBUG: Aider.setup: Aider setup complete
-[2024-11-25 21:32:34] DEBUG: Aider core setup complete
-[2024-11-25 21:32:34] DEBUG: Autocmds setup complete
-[2024-11-25 21:32:56] DEBUG: Toggling Aider window. Current state: open [CorrelationID: 8a7cb9e3]
-[2024-11-25 21:32:56] DEBUG: New state: closed [CorrelationID: 8a7cb9e3]
-[2024-11-25 21:32:57] DEBUG: VimLeavePre autocmd triggered
-[2024-11-25 21:32:57] INFO: Cleaning up Aider
+} [CorrelationID: a897e5ac]
+[2024-11-26 13:01:56] DEBUG: ContextManager.update: Context update complete [CorrelationID: a897e5ac]
+[2024-11-26 13:01:56] DEBUG: ContextManager.get_batched_commands: Starting command generation [CorrelationID: 111e97ab]
+[2024-11-26 13:01:56] DEBUG: Generated commands: { "/add lua/aider/context_manager.lua lua/aider/logger.lua" } [CorrelationID: 111e97ab]
+[2024-11-26 13:01:56] DEBUG: Context update inputs sent to Aider: { "/add lua/aider/context_manager.lua lua/aider/logger.lua" }
+[2024-11-26 13:01:56] DEBUG: Context update operation took 0.590 ms [CorrelationID: ee07b30e]
+[2024-11-26 13:01:56] DEBUG: Aider.setup: BufferManager setup complete
+[2024-11-26 13:01:56] DEBUG: Aider.setup: CommandExecutor setup complete
+[2024-11-26 13:01:56] DEBUG: Aider.setup: Autocommands setup complete
+[2024-11-26 13:01:56] DEBUG: Aider.setup: Keybindings setup complete
+[2024-11-26 13:01:56] DEBUG: Aider.setup: Aider setup complete
+[2024-11-26 13:01:56] DEBUG: Aider core setup complete
+[2024-11-26 13:01:56] DEBUG: Autocmds setup complete
+[2024-11-26 13:01:58] DEBUG: Toggling Aider window. Current state: open [CorrelationID: 32509fc7]
+[2024-11-26 13:01:58] DEBUG: New state: closed [CorrelationID: 32509fc7]
+[2024-11-26 13:02:02] DEBUG: Toggling Aider window. Current state: closed [CorrelationID: c7516d1d]
+[2024-11-26 13:02:02] DEBUG: Aider window created successfully: 1008
+[2024-11-26 13:02:02] DEBUG: New state: open [CorrelationID: c7516d1d]
+[2024-11-26 13:03:20] DEBUG: Toggling Aider window. Current state: open [CorrelationID: 5f4efcc4]
+[2024-11-26 13:03:20] DEBUG: New state: closed [CorrelationID: 5f4efcc4]
+[2024-11-26 13:04:13] DEBUG: Toggling Aider window. Current state: closed [CorrelationID: 1cc52b39]
+[2024-11-26 13:04:13] DEBUG: Aider window created successfully: 1017
+[2024-11-26 13:04:13] DEBUG: New state: open [CorrelationID: 1cc52b39]
+[2024-11-26 13:05:45] DEBUG: Toggling Aider window. Current state: open [CorrelationID: 2deb78eb]
+[2024-11-26 13:05:45] DEBUG: New state: closed [CorrelationID: 2deb78eb]
+[2024-11-26 13:06:01] DEBUG: Toggling Aider window. Current state: closed [CorrelationID: 3efc25c5]
+[2024-11-26 13:06:01] DEBUG: Aider window created successfully: 1022
+[2024-11-26 13:06:01] DEBUG: New state: open [CorrelationID: 3efc25c5]
+[2024-11-26 13:06:02] DEBUG: Toggling Aider window. Current state: open [CorrelationID: 781cfb75]
+[2024-11-26 13:06:02] DEBUG: New state: closed [CorrelationID: 781cfb75]
+[2024-11-26 13:06:03] DEBUG: VimLeavePre autocmd triggered
+[2024-11-26 13:06:03] INFO: Cleaning up Aider
