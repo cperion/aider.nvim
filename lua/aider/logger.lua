@@ -36,7 +36,7 @@ local function log(level, message, correlation_id)
 		if correlation_id then
 			log_message = log_message .. " [CorrelationID: " .. tostring(correlation_id) .. "]"
 		end
-		
+
 		-- Write to log file
 		if log_file then
 			log_file:write(log_message .. "\n")
