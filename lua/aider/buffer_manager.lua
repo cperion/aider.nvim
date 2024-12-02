@@ -81,7 +81,7 @@ end
 function BufferManager.set_terminal_options(buf)
     if buf and vim.api.nvim_buf_is_valid(buf) then
         vim.schedule(function()
-            pcall(vim.api.nvim_buf_set_option, buf, "buftype", "terminal")
+            vim.bo[buf].buftype = "terminal"
         end)
     end
 end
