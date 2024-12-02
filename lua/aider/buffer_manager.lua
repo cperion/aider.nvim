@@ -18,7 +18,7 @@ function BufferManager.get_valid_buffers()
 
         -- Get buffer info
         local bufname = vim.api.nvim_buf_get_name(buf)
-        local buftype = vim.api.nvim_buf_get_option(buf, "buftype")
+        local buftype = vim.bo[buf].buftype
 
         -- Skip special buffers and Aider buffer
         if buftype ~= "" or buf == aider_buf then
@@ -32,8 +32,8 @@ function BufferManager.get_valid_buffers()
                 table.insert(valid_buffers, {
                     id = buf,
                     name = bufname,
-                    filetype = vim.api.nvim_buf_get_option(buf, "filetype"),
-                    modified = vim.api.nvim_buf_get_option(buf, "modified")
+                    filetype = vim.bo[buf].filetype,
+                    modified = vim.bo[buf].modified
                 })
             end
         end
@@ -58,7 +58,6 @@ function BufferManager.get_or_create_aider_buffer()
 
     -- Set initial buffer options
     vim.api.nvim_buf_set_name(buf, "Aider")
-    
     -- Only set these options if the buffer is valid
     if vim.api.nvim_buf_is_valid(buf) then
         -- These are the safe buffer options we can set
@@ -68,12 +67,10 @@ function BufferManager.get_or_create_aider_buffer()
     end
 
     aider_buf = buf
-    
     -- Set up the 'q' keybinding for normal mode only
     vim.keymap.set("n", "q", function()
         require("aider.window_manager").hide_aider_window()
     end, { silent = true, buffer = buf })
-    
     return buf
 end
 
@@ -105,15 +102,12 @@ end
 function BufferManager.update_context()
     local correlation_id = Logger.generate_correlation_id()
     Logger.debug("Updating context", correlation_id)
-    
     if not require("aider.command_executor").is_aider_running() then
         Logger.debug("Skipping context update - Aider not running", correlation_id)
         return
     end
-    
     local new_context = BufferManager.get_context_buffers()
     require("aider.context_manager").update(new_context)
-    
     local commands = require("aider.context_manager").get_batched_commands()
     if #commands > 0 then
         Logger.debug("Sending context update commands: " .. vim.inspect(commands), correlation_id)
@@ -121,7 +115,6 @@ function BufferManager.update_context()
     else
         Logger.debug("No context changes to send", correlation_id)
     end
-    
     Logger.debug("Context update complete", correlation_id)
 end
 
