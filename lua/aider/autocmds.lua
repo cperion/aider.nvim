@@ -1,4 +1,3 @@
-local BufferManager = require("aider.buffer_manager")
 local Aider = require("aider.core")
 local Logger = require("aider.logger")
 

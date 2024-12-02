@@ -62,9 +62,9 @@ function BufferManager.get_or_create_aider_buffer()
     -- Only set these options if the buffer is valid
     if vim.api.nvim_buf_is_valid(buf) then
         -- These are the safe buffer options we can set
-        vim.api.nvim_buf_set_option(buf, "swapfile", false)
-        vim.api.nvim_buf_set_option(buf, "bufhidden", "hide")
-        vim.api.nvim_buf_set_option(buf, "buflisted", false)
+        vim.bo[buf].swapfile = false
+        vim.bo[buf].bufhidden = "hide"
+        vim.bo[buf].buflisted = false
     end
 
     aider_buf = buf

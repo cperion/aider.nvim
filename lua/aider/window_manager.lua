@@ -13,7 +13,9 @@ function WindowManager.show_window(buf, layout)
 
 	-- If there's an existing window, just focus it
 	if WindowManager.is_window_open() then
-		vim.api.nvim_set_current_win(aider_win)
+		if aider_win and vim.api.nvim_win_is_valid(aider_win) then
+		    vim.api.nvim_set_current_win(aider_win)
+		end
 		return
 	end
 
@@ -52,8 +54,8 @@ function WindowManager.show_window(buf, layout)
 	vim.api.nvim_win_set_buf(aider_win, buf)
 
 	-- Set window options
-	vim.api.nvim_win_set_option(aider_win, "winfixheight", true)
-	vim.api.nvim_win_set_option(aider_win, "winfixwidth", true)
+	vim.wo[aider_win].winfixheight = true
+	vim.wo[aider_win].winfixwidth = true
 end
 
 function WindowManager.hide_aider_window()
@@ -62,7 +64,9 @@ function WindowManager.hide_aider_window()
 		local current_win = vim.api.nvim_get_current_win()
 
 		-- Close the window instead of hiding it
-		vim.api.nvim_win_close(aider_win, true)
+		if aider_win and vim.api.nvim_win_is_valid(aider_win) then
+		    vim.api.nvim_win_close(aider_win, true)
+		end
 
 		-- Return to the previous window if it's still valid
 		if current_win ~= aider_win and vim.api.nvim_win_is_valid(current_win) then
