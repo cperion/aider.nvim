@@ -12,7 +12,7 @@ function BufferManager.get_valid_buffers()
     local valid_buffers = {}
     for _, buf in ipairs(vim.api.nvim_list_bufs()) do
         -- Skip if buffer is invalid or hidden
-        if not vim.api.nvim_buf_is_valid(buf) or vim.api.nvim_buf_get_option(buf, "bufhidden") == "hide" then
+        if not vim.api.nvim_buf_is_valid(buf) or vim.bo[buf].bufhidden == "hide" then
             goto continue
         end
 
