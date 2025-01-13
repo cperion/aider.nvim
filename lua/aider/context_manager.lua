@@ -40,12 +40,12 @@ function ContextManager.get_batched_commands()
 
 	local files_to_add = {}
 	for file, _ in pairs(pending_changes.add) do
-		table.insert(files_to_add, Utils.get_relative_path(file))
+		table.insert(files_to_add, '"' .. Utils.get_relative_path(file) .. '"')
 	end
 
 	local files_to_drop = {}
 	for file, _ in pairs(pending_changes.drop) do
-		table.insert(files_to_drop, Utils.get_relative_path(file))
+		table.insert(files_to_drop, '"' .. Utils.get_relative_path(file) .. '"')
 	end
 
 	if #files_to_add > 0 then
@@ -90,7 +90,7 @@ function ContextManager.mass_sync_context()
 	if #current_buffers > 0 then
 		local relative_paths = {}
 		for _, file in ipairs(current_buffers) do
-			table.insert(relative_paths, Utils.get_relative_path(file))
+			table.insert(relative_paths, '"' .. Utils.get_relative_path(file) .. '"')
 		end
 		table.insert(inputs, "/add " .. table.concat(relative_paths, " "))
 	end
