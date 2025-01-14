@@ -56,6 +56,8 @@ function WindowManager.show_window(buf, layout)
 	-- Set window options
 	vim.wo[aider_win].winfixheight = true
 	vim.wo[aider_win].winfixwidth = true
+	vim.wo[aider_win].number = false
+	vim.wo[aider_win].relativenumber = false
 end
 
 function WindowManager.hide_aider_window()
