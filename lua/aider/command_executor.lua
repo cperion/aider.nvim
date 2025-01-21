@@ -38,12 +38,10 @@ function M.setup()
 end
 
 function M.is_aider_running()
-    -- Check three-way validity:
-    return terminal_job_id ~= nil and          -- We have a job ID
-           aider_buf and                       -- Buffer reference exists
-           vim.api.nvim_buf_is_valid(aider_buf) and  -- Buffer is valid
+    return terminal_job_id ~= nil and
+           aider_buf and
+           vim.api.nvim_buf_is_valid(aider_buf) and
            pcall(function()
-               -- Buffer's terminal job matches our ID
                return vim.api.nvim_buf_get_var(aider_buf, "terminal_job_id") == terminal_job_id
            end)
 end
@@ -331,6 +329,15 @@ function M.on_buffer_close(bufnr)
     end)
 end
 
+function M.stop_aider()
+    if terminal_job_id and M.is_aider_running() then
+        pcall(vim.fn.jobstop, terminal_job_id)
+    end
+    terminal_job_id = nil
+    command_queue = {}
+    is_executing = false
+end
+
 function M.on_aider_exit(exit_code)
     -- Clear terminal state FIRST
     terminal_job_id = nil
@@ -338,10 +345,10 @@ function M.on_aider_exit(exit_code)
     is_executing = false
     
     -- Then clear context
-    ContextManager.update({})
+    require("aider.context_manager").update({})
     
     -- Finally reset buffer through manager
-    BufferManager.reset_aider_buffer()
+    require("aider.buffer_manager").reset_aider_buffer()
     
     vim.schedule(function()
         Logger.info("Aider finished" .. (exit_code and " with exit code "..tostring(exit_code) or ""))

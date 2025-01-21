@@ -1,7 +1,3 @@
-local WindowManager = require("aider.window_manager")
-local BufferManager = require("aider.buffer_manager")
-local CommandExecutor = require("aider.command_executor")
-local ContextManager = require("aider.context_manager")
 local config = require("aider.config")
 local Logger = require("aider.logger")
 
@@ -57,51 +53,46 @@ end
 
 function Aider.toggle(args, layout)
     local correlation_id = Logger.generate_correlation_id()
-    local is_open = WindowManager.is_window_open()
-    Logger.debug("Toggling Aider window. Current state: " .. (is_open and "open" or "closed"), correlation_id)
+    local is_open = require("aider.window_manager").is_window_open()
+    Logger.debug("Toggling Aider. Current state: " .. (is_open and "open" or "closed"), correlation_id)
 
     if is_open then
-        WindowManager.hide_aider_window()
+        Aider.cleanup_instance()
+        Logger.debug("Aider closed", correlation_id)
     else
-        local buf = BufferManager.get_aider_buffer()
-        if not buf then
-            Logger.error("Failed to get or create Aider buffer", correlation_id)
+        require("aider.buffer_manager").reset_aider_buffer()
+        local buf = require("aider.buffer_manager").get_or_create_aider_buffer()
+        
+        if not buf or not vim.api.nvim_buf_is_valid(buf) then
+            Logger.error("Buffer creation failed", correlation_id)
             return
         end
 
-        local used_layout = layout or config.get("default_layout") or current_layout
-        WindowManager.show_window(buf, used_layout)
-
-        if not CommandExecutor.is_aider_running() then
-            local default_args = config.get("aider_args") or ""
-            Logger.debug("Default args from config: " .. tostring(default_args), correlation_id)
-            Logger.debug("Provided args: " .. tostring(args), correlation_id)
-
-            local final_args = ""
-            if default_args ~= "" then
-                final_args = default_args
-            end
-            if args and args ~= "" then
-                final_args = final_args .. (final_args ~= "" and " " or "") .. args
-            end
-            Logger.debug("Final args: " .. tostring(final_args), correlation_id)
-            
-            local initial_context = BufferManager.get_context_buffers()
-            CommandExecutor.start_aider(buf, final_args, initial_context)
-            Logger.debug("Aider started with args: " .. final_args, correlation_id)
+        require("aider.window_manager").show_window(buf, layout or config.get("default_layout"))
+        
+        if not require("aider.command_executor").is_aider_running() then
+            local final_args = table.concat({
+                config.get("aider_args"),
+                args or ""
+            }, " ")
+            require("aider.command_executor").start_aider(buf, final_args, require("aider.buffer_manager").get_context_buffers())
         end
     end
+end
 
-    Logger.debug("New state: " .. (WindowManager.is_window_open() and "open" or "closed"), correlation_id)
+function Aider.cleanup_instance()
+    Logger.debug("Starting instance cleanup")
+    require("aider.command_executor").stop_aider()
+    require("aider.window_manager").hide_aider_window()
+    require("aider.buffer_manager").reset_aider_buffer()
+    Logger.debug("Instance cleanup completed")
 end
 
 function Aider.cleanup()
-	Logger.info("Cleaning up Aider")
-	WindowManager.hide_aider_window()
-	CommandExecutor.stop_aider()
-	Logger.cleanup()
-	-- Clear any other resources or state
-	Logger.info("Aider cleanup complete")
+    Logger.info("Cleaning up Aider")
+    Aider.cleanup_instance()
+    Logger.cleanup()
+    Logger.info("Aider cleanup complete")
 end
 
 function Aider.setup_autocommands()

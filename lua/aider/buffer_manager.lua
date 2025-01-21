@@ -44,30 +44,28 @@ function BufferManager.get_valid_buffers()
 end
 
 function BufferManager.get_or_create_aider_buffer()
-    -- Return existing buffer if valid
-    if aider_buf and vim.api.nvim_buf_is_valid(aider_buf) then
-        return aider_buf
+    if aider_buf and not vim.api.nvim_buf_is_valid(aider_buf) then
+        aider_buf = nil
     end
     
-    -- Create new buffer
-    local buf = vim.api.nvim_create_buf(false, true)
-    if not buf then
-        Logger.error("Failed to create Aider buffer")
-        return nil
+    if not aider_buf then
+        local buf = vim.api.nvim_create_buf(false, true)
+        if not buf then return nil end
+        
+        local unique_id = string.format("%d_%d", os.time(), math.random(1000,9999))
+        pcall(vim.api.nvim_buf_set_name, buf, "Aider_"..unique_id)
+        
+        vim.bo[buf].swapfile = false
+        vim.bo[buf].bufhidden = "hide"
+        vim.bo[buf].buflisted = false
+
+        aider_buf = buf
+        vim.keymap.set("n", "q", function()
+            require("aider.window_manager").hide_aider_window()
+        end, { silent = true, buffer = buf })
     end
-
-    -- Set initial buffer options
-    vim.api.nvim_buf_set_name(buf, "Aider")
-    vim.bo[buf].swapfile = false
-    vim.bo[buf].bufhidden = "hide"
-    vim.bo[buf].buflisted = false
-
-    aider_buf = buf
-    -- Set up the 'q' keybinding for normal mode only
-    vim.keymap.set("n", "q", function()
-        require("aider.window_manager").hide_aider_window()
-    end, { silent = true, buffer = buf })
-    return buf
+    
+    return aider_buf
 end
 
 -- New function to set terminal options
@@ -84,11 +82,12 @@ function BufferManager.get_aider_buffer()
 end
 
 function BufferManager.reset_aider_buffer()
-    if aider_buf and vim.api.nvim_buf_is_valid(aider_buf) then
-        -- Soft delete instead of force delete
-        pcall(vim.api.nvim_buf_delete, aider_buf, {})
+    if aider_buf then
+        if vim.api.nvim_buf_is_valid(aider_buf) then
+            pcall(vim.api.nvim_buf_delete, aider_buf, { force = true })
+        end
+        aider_buf = nil
     end
-    aider_buf = nil
 end
 
 function BufferManager.is_aider_buffer(buf)

@@ -65,23 +65,24 @@ function WindowManager.show_window(buf, layout)
 end
 
 function WindowManager.hide_aider_window()
-	if WindowManager.is_window_open() then
-		-- Store the current window
-		local current_win = vim.api.nvim_get_current_win()
+    if WindowManager.is_window_open() then
+        local current_win = vim.api.nvim_get_current_win()
+        local success = true
+        
+        success = pcall(function()
+            if aider_win and vim.api.nvim_win_is_valid(aider_win) then
+                vim.api.nvim_win_close(aider_win, true)
+            end
+        end)
 
-		-- Close the window instead of hiding it
-		if aider_win and vim.api.nvim_win_is_valid(aider_win) then
-		    vim.api.nvim_win_close(aider_win, true)
-		end
+        if success and current_win ~= aider_win and vim.api.nvim_win_is_valid(current_win) then
+            pcall(vim.api.nvim_set_current_win, current_win)
+        end
 
-		-- Return to the previous window if it's still valid
-		if current_win ~= aider_win and vim.api.nvim_win_is_valid(current_win) then
-			vim.api.nvim_set_current_win(current_win)
-		end
-
-		-- Clear the window reference
-		aider_win = nil
-	end
+        aider_win = nil
+        return success
+    end
+    return true
 end
 
 function WindowManager.is_window_open()
