@@ -3,31 +3,35 @@ local ContextManager = require("aider.context_manager")
 local Logger = require("aider.logger")
 local config = require("aider.config")
 local Utils = require("aider.utils")
+local session = require("aider.session")
 
 local M = {}
-local terminal_job_id = nil  -- Only track job ID here
 local command_queue = {}
 local is_executing = false
 
 function M.debug_terminal_state()
-    local buf = BufferManager.get_aider_buffer()
-    local state = {
-        job_id = terminal_job_id,
-        buf = buf,
-        buf_valid = buf and vim.api.nvim_buf_is_valid(buf) or false,
-        terminal_job_id = buf and vim.api.nvim_buf_is_valid(buf) and 
-            pcall(function() return vim.api.nvim_buf_get_var(buf, "terminal_job_id") end)
+    local correlation_id = Logger.generate_correlation_id()
+    local state = session.get()
+    local debug_info = {
+        session_state = state,
+        buf_valid = state.buf_id and vim.api.nvim_buf_is_valid(state.buf_id) or false,
+        terminal_job_id = state.buf_id and vim.api.nvim_buf_is_valid(state.buf_id) and
+            pcall(function() return vim.api.nvim_buf_get_var(state.buf_id, "terminal_job_id") end),
+        queue_status = {
+            queue_length = #command_queue,
+            is_executing = is_executing
+        }
     }
-    Logger.debug("Terminal state: " .. vim.inspect(state))
-    return state
+    Logger.debug("Terminal state: " .. vim.inspect(debug_info), correlation_id)
+    return debug_info
 end
 
 function M.scroll_to_bottom()
-    local buf = BufferManager.get_aider_buffer()
-    if buf and vim.api.nvim_buf_is_valid(buf) then
-        local window = vim.fn.bufwinid(buf)
+    local state = session.get()
+    if state.buf_id and vim.api.nvim_buf_is_valid(state.buf_id) then
+        local window = vim.fn.bufwinid(state.buf_id)
         if window ~= -1 then
-            local line_count = vim.api.nvim_buf_line_count(buf)
+            local line_count = vim.api.nvim_buf_line_count(state.buf_id)
             vim.api.nvim_win_set_cursor(window, { line_count, 0 })
         end
     end
@@ -38,13 +42,62 @@ function M.setup()
 end
 
 function M.is_aider_running()
-    local buf = require("aider.buffer_manager").get_aider_buffer()
-    return terminal_job_id ~= nil and
-           buf and
-           vim.api.nvim_buf_is_valid(buf) and
-           pcall(function()
-               return vim.api.nvim_buf_get_var(buf, "terminal_job_id") == terminal_job_id
-           end)
+    local state = session.get()
+    if not (state.active and state.buf_id and state.job_id) then
+        return false
+    end
+
+    -- Quick health check
+    if not vim.api.nvim_buf_is_valid(state.buf_id) then
+        return false
+    end
+
+    -- Verify terminal job is still running
+    local success, job_id = pcall(vim.api.nvim_buf_get_var, state.buf_id, "terminal_job_id")
+    if not success then
+        return false
+    end
+
+    -- Check if job is actually alive
+    return vim.fn.jobwait({state.job_id}, 0)[1] == -1
+end
+
+function M.wait_until_ready(timeout)
+    local correlation_id = Logger.generate_correlation_id()
+    Logger.debug("Waiting for Aider to be ready", correlation_id)
+    
+    local start = vim.loop.now()
+    while vim.loop.now() - start < (timeout or 5000) do
+        if M.is_aider_running() then
+            Logger.debug("Aider is ready", correlation_id)
+            return true
+        end
+        vim.wait(100)
+    end
+    
+    Logger.error("Aider failed to become ready within timeout", correlation_id)
+    return false
+end
+
+function M.handle_error(err)
+    local correlation_id = Logger.generate_correlation_id()
+    Logger.error("Aider error: " .. tostring(err), correlation_id)
+    
+    local state = session.get()
+    if not state.recovering then
+        Logger.debug("Starting error recovery", correlation_id)
+        session.update({ recovering = true })
+        
+        M.stop_aider()
+        
+        vim.defer_fn(function()
+            require('aider').toggle()
+            session.update({ recovering = false })
+            Logger.debug("Error recovery complete", correlation_id)
+        end, 1000)
+    else
+        Logger.debug("Already in recovery mode, skipping", correlation_id)
+    end
 end
 
 function M.start_aider(buf, args, initial_context)
@@ -75,8 +128,11 @@ function M.start_aider(buf, args, initial_context)
     Logger.info("Starting Aider", correlation_id)
     Logger.debug("Command: " .. command, correlation_id)
 
-    -- Clear previous job reference
-    terminal_job_id = nil
+    -- Clear session state
+    session.update({
+        active = false,
+        job_id = nil
+    })
     
     -- Start new terminal job
     local job_id = vim.fn.termopen(command, {
@@ -87,19 +143,23 @@ function M.start_aider(buf, args, initial_context)
 
     if job_id <= 0 then
         Logger.error("Failed to start Aider job. Job ID: " .. tostring(job_id), correlation_id)
-        return
+        return false
     end
 
-    -- Store new job reference
-    terminal_job_id = job_id
-    aider_buf = buf
+    -- Update session state
+    session.update({
+        active = true,
+        job_id = job_id,
+        buf_id = buf
+    })
 
     -- Set terminal options after terminal is opened
     BufferManager.set_terminal_options(buf)
 
-    Logger.debug("Aider job started with job_id: " .. tostring(aider_job_id), correlation_id)
+    Logger.debug("Aider job started with job_id: " .. tostring(job_id), correlation_id)
     
     ContextManager.update(initial_context)
+    session.update({ context = initial_context })
     Logger.debug("Context updated", correlation_id)
 
     Logger.info("Aider started successfully", correlation_id)
@@ -110,6 +170,8 @@ function M.start_aider(buf, args, initial_context)
             M.scroll_to_bottom()
         end)
     end
+
+    return true
 end
 
 function M.update_aider_context()
@@ -157,7 +219,10 @@ function M.queue_commands(inputs, is_context_update)
 end
 
 function M.process_command_queue()
-    if is_executing or #command_queue == 0 or not M.is_aider_running() or not aider_buf then
+    local correlation_id = Logger.generate_correlation_id()
+    local state = session.get()
+    
+    if is_executing or #command_queue == 0 or not M.is_aider_running() or not state.buf_id then
         return
     end
 
@@ -183,21 +248,27 @@ function M.process_command_queue()
         
         -- Process context update inputs first
         if #context_update_inputs > 0 then
+            Logger.debug("Processing context update inputs: " .. vim.inspect(context_update_inputs), correlation_id)
             for _, input in ipairs(context_update_inputs) do
-                success = success and pcall(M.send_input, input)
+                success = success and M.send_input(input)
             end
             if success then
-                Logger.debug("Context update inputs sent to Aider: " .. vim.inspect(context_update_inputs))
+                Logger.debug("Context update inputs sent successfully", correlation_id)
+            else
+                Logger.error("Failed to send context update inputs", correlation_id)
             end
         end
 
         -- Process user inputs
         if success and #inputs_to_send > 0 then
+            Logger.debug("Processing user inputs: " .. vim.inspect(inputs_to_send), correlation_id)
             for _, input in ipairs(inputs_to_send) do
-                success = success and pcall(M.send_input, input)
+                success = success and M.send_input(input)
             end
             if success then
-                Logger.debug("User inputs sent to Aider: " .. vim.inspect(inputs_to_send))
+                Logger.debug("User inputs sent successfully", correlation_id)
+            else
+                Logger.error("Failed to send user inputs", correlation_id)
             end
         end
 
@@ -207,9 +278,12 @@ function M.process_command_queue()
     local function retry_processing()
         if not process_batch() and retry_count < max_retries then
             retry_count = retry_count + 1
-            Logger.debug("Retrying command processing, attempt " .. retry_count)
+            Logger.debug("Retrying command processing, attempt " .. retry_count, correlation_id)
             vim.defer_fn(retry_processing, 100 * retry_count)
         else
+            if retry_count >= max_retries then
+                Logger.error("Failed to process command queue after " .. max_retries .. " retries", correlation_id)
+            end
             command_queue = {}
             is_executing = false
             vim.defer_fn(M.process_command_queue, 500)
@@ -220,12 +294,14 @@ function M.process_command_queue()
 end
 
 function M.send_input(input)
+    local correlation_id = Logger.generate_correlation_id()
+    
     if not M.is_aider_running() then
-        Logger.warn("Cannot send input - Aider is not running")
-        return
+        Logger.warn("Cannot send input - Aider is not running", correlation_id)
+        return false
     end
 
-    Logger.debug("Sending input to Aider: " .. input)
+    Logger.debug("Sending input to Aider: " .. input, correlation_id)
     
     -- Ensure input ends with newline
     if not input:match("\n$") then
@@ -234,24 +310,32 @@ function M.send_input(input)
 
     -- Try different methods to send input to ensure it works
     local success = false
+    local state = session.get()
     
-    -- Method 1: Using job_id
-    if aider_job_id then
+    -- Method 1: Using job_id from session
+    if state.job_id then
         success = pcall(function()
-            vim.fn.chansend(aider_job_id, input)
+            vim.fn.chansend(state.job_id, input)
         end)
+        if success then
+            Logger.debug("Successfully sent input using job_id", correlation_id)
+        end
     end
     
     -- Method 2: Using terminal buffer directly if Method 1 failed
-    if not success and aider_buf and vim.api.nvim_buf_is_valid(aider_buf) then
+    if not success and state.buf_id and vim.api.nvim_buf_is_valid(state.buf_id) then
         success = pcall(function()
-            vim.api.nvim_chan_send(vim.api.nvim_buf_get_var(aider_buf, "terminal_job_id"), input)
+            local term_job_id = vim.api.nvim_buf_get_var(state.buf_id, "terminal_job_id")
+            vim.api.nvim_chan_send(term_job_id, input)
         end)
+        if success then
+            Logger.debug("Successfully sent input using buffer channel", correlation_id)
+        end
     end
 
     if not success then
-        Logger.error("Failed to send input to Aider terminal")
-        return
+        Logger.error("Failed to send input to Aider terminal", correlation_id)
+        return false
     end
 
     -- Scroll to the bottom after sending input if auto_scroll is enabled
@@ -260,6 +344,8 @@ function M.send_input(input)
             M.scroll_to_bottom()
         end)
     end
+
+    return true
 end
 
 function M.get_aider_context()
@@ -331,32 +417,59 @@ function M.on_buffer_close(bufnr)
 end
 
 function M.stop_aider()
-    -- Clear job first to prevent false positive in is_aider_running()
-    local job = terminal_job_id
-    terminal_job_id = nil
-    if job and vim.fn.jobwait({job}, 0)[1] == -1 then
-        pcall(vim.fn.jobstop, job)
+    local correlation_id = Logger.generate_correlation_id()
+    Logger.debug("Stopping Aider instance", correlation_id)
+
+    -- Get job ID from session state
+    local state = session.get()
+    local job_id = state.job_id
+    
+    -- Clear session state first to prevent race conditions
+    session.update({
+        active = false,
+        job_id = nil
+    })
+    
+    -- Stop the job if it's still running
+    if job_id and vim.fn.jobwait({job_id}, 0)[1] == -1 then
+        pcall(vim.fn.jobstop, job_id)
+        Logger.debug("Stopped Aider job: " .. tostring(job_id), correlation_id)
     end
+    
+    -- Clear command queue
     command_queue = {}
     is_executing = false
+    
+    Logger.debug("Aider instance stopped", correlation_id)
 end
 
 function M.on_aider_exit(exit_code)
-    -- Clear terminal state FIRST
-    terminal_job_id = nil
+    local correlation_id = Logger.generate_correlation_id()
+    Logger.debug("Handling Aider exit with code: " .. tostring(exit_code), correlation_id)
+    
+    -- Clear queue state
     command_queue = {}
     is_executing = false
     
-    -- Then clear context
+    -- Clear context and update session state
     require("aider.context_manager").update({})
+    session.update({
+        active = false,
+        job_id = nil,
+        context = {}
+    })
     
-    -- Finally reset buffer through manager
+    -- Reset buffer state
     require("aider.buffer_manager").reset_aider_buffer()
     
     vim.schedule(function()
         Logger.info("Aider finished" .. (exit_code and " with exit code "..tostring(exit_code) or ""))
-        -- Optional: Add visual feedback here
+        if exit_code ~= 0 then
+            vim.notify("Aider exited with code " .. tostring(exit_code), vim.log.levels.WARN)
+        end
     end)
+    
+    Logger.debug("Aider exit handling complete", correlation_id)
 end
 
 return M
