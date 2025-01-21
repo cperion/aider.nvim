@@ -18,7 +18,8 @@ function WindowManager.show_window(buf, layout)
 	-- If there's an existing window, just focus it
 	if WindowManager.is_window_open() then
 		if aider_win and vim.api.nvim_win_is_valid(aider_win) then
-		    vim.api.nvim_set_current_win(aider_win)
+			vim.api.nvim_win_set_buf(aider_win, buf)  -- Critical fix
+			vim.api.nvim_set_current_win(aider_win)
 		end
 		return
 	end

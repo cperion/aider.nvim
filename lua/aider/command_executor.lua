@@ -5,7 +5,7 @@ local config = require("aider.config")
 local Utils = require("aider.utils")
 
 local M = {}
-local terminal_job_id = nil  -- Track terminal job separately
+local terminal_job_id = nil  -- Only track job ID here
 local command_queue = {}
 local is_executing = false
 
@@ -38,11 +38,12 @@ function M.setup()
 end
 
 function M.is_aider_running()
+    local buf = require("aider.buffer_manager").get_aider_buffer()
     return terminal_job_id ~= nil and
-           aider_buf and
-           vim.api.nvim_buf_is_valid(aider_buf) and
+           buf and
+           vim.api.nvim_buf_is_valid(buf) and
            pcall(function()
-               return vim.api.nvim_buf_get_var(aider_buf, "terminal_job_id") == terminal_job_id
+               return vim.api.nvim_buf_get_var(buf, "terminal_job_id") == terminal_job_id
            end)
 end
 
@@ -330,10 +331,12 @@ function M.on_buffer_close(bufnr)
 end
 
 function M.stop_aider()
-    if terminal_job_id and M.is_aider_running() then
-        pcall(vim.fn.jobstop, terminal_job_id)
-    end
+    -- Clear job first to prevent false positive in is_aider_running()
+    local job = terminal_job_id
     terminal_job_id = nil
+    if job and vim.fn.jobwait({job}, 0)[1] == -1 then
+        pcall(vim.fn.jobstop, job)
+    end
     command_queue = {}
     is_executing = false
 end
