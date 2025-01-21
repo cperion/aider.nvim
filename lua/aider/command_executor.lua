@@ -5,31 +5,32 @@ local config = require("aider.config")
 local Utils = require("aider.utils")
 
 local M = {}
-local aider_buf = nil
 local terminal_job_id = nil  -- Track terminal job separately
 local command_queue = {}
 local is_executing = false
 
 function M.debug_terminal_state()
+    local buf = BufferManager.get_aider_buffer()
     local state = {
-        job_id = aider_job_id,
-        buf = aider_buf,
-        buf_valid = aider_buf and vim.api.nvim_buf_is_valid(aider_buf) or false,
-        terminal_job_id = aider_buf and vim.api.nvim_buf_is_valid(aider_buf) and 
-            pcall(function() return vim.api.nvim_buf_get_var(aider_buf, "terminal_job_id") end)
+        job_id = terminal_job_id,
+        buf = buf,
+        buf_valid = buf and vim.api.nvim_buf_is_valid(buf) or false,
+        terminal_job_id = buf and vim.api.nvim_buf_is_valid(buf) and 
+            pcall(function() return vim.api.nvim_buf_get_var(buf, "terminal_job_id") end)
     }
     Logger.debug("Terminal state: " .. vim.inspect(state))
     return state
 end
 
 function M.scroll_to_bottom()
-	if aider_buf and vim.api.nvim_buf_is_valid(aider_buf) then
-		local window = vim.fn.bufwinid(aider_buf)
-		if window ~= -1 then
-			local line_count = vim.api.nvim_buf_line_count(aider_buf)
-			vim.api.nvim_win_set_cursor(window, { line_count, 0 })
-		end
-	end
+    local buf = BufferManager.get_aider_buffer()
+    if buf and vim.api.nvim_buf_is_valid(buf) then
+        local window = vim.fn.bufwinid(buf)
+        if window ~= -1 then
+            local line_count = vim.api.nvim_buf_line_count(buf)
+            vim.api.nvim_win_set_cursor(window, { line_count, 0 })
+        end
+    end
 end
 
 function M.setup()
@@ -331,11 +332,16 @@ function M.on_buffer_close(bufnr)
 end
 
 function M.on_aider_exit(exit_code)
-    -- Clear job state but preserve buffer
+    -- Clear terminal state FIRST
     terminal_job_id = nil
     command_queue = {}
     is_executing = false
+    
+    -- Then clear context
     ContextManager.update({})
+    
+    -- Finally reset buffer through manager
+    BufferManager.reset_aider_buffer()
     
     vim.schedule(function()
         Logger.info("Aider finished" .. (exit_code and " with exit code "..tostring(exit_code) or ""))

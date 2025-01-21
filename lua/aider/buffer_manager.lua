@@ -83,6 +83,14 @@ function BufferManager.get_aider_buffer()
     return aider_buf
 end
 
+function BufferManager.reset_aider_buffer()
+    if aider_buf and vim.api.nvim_buf_is_valid(aider_buf) then
+        -- Soft delete instead of force delete
+        pcall(vim.api.nvim_buf_delete, aider_buf, {})
+    end
+    aider_buf = nil
+end
+
 function BufferManager.is_aider_buffer(buf)
     return buf == aider_buf
 end
