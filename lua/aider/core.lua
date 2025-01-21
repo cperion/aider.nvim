@@ -67,18 +67,21 @@ function Aider.toggle(args, layout)
     local state = session.get()
     Logger.debug("Toggling Aider. Current state: " .. vim.inspect(state), correlation_id)
 
-    -- Check if window is currently visible using buffer-based detection
+    -- Check if window is currently visible
     if WindowManager.is_window_open() then
+        Logger.debug("Hiding Aider window while preserving process state", correlation_id)
+        
         -- Save window layout before hiding
         WindowManager.save_layout()
 
-        -- Preserve terminal state
-        if state.buf_id then
-            BufferManager.preserve_terminal_state(state.buf_id)
-        end
-
-        -- Hide window but preserve session
+        -- Hide window but preserve process and terminal state
         WindowManager.hide_aider_window()
+        
+        -- Verify process state after hiding
+        if state.job_id then
+            local is_running = vim.fn.jobwait({ state.job_id }, 0)[1] == -1
+            Logger.debug("Process state after hide: " .. (is_running and "running" or "stopped"), correlation_id)
+        end
     else
         if state.active then
             -- Restore existing session
@@ -145,43 +148,58 @@ function Aider.cleanup_instance()
 
     local state = session.get()
 
-    -- Save window layout if visible
+    -- Preserve UI and terminal state
+    local preserved_state = {
+        layout = state.layout,
+        dimensions = state.dimensions,
+        terminal_state = state.terminal_state
+    }
+    
+    -- Save current window layout if visible
     if WindowManager.is_window_open() then
         WindowManager.save_layout()
+        preserved_state.layout = state.layout
+        preserved_state.dimensions = state.dimensions
     end
 
     -- Preserve terminal state if possible
     if state.buf_id and vim.api.nvim_buf_is_valid(state.buf_id) then
         BufferManager.preserve_terminal_state(state.buf_id)
+        preserved_state.terminal_state = session.get().terminal_state
     end
 
-    -- Stop the Aider process
+    -- Stop the Aider process if running
     if state.active then
+        Logger.debug("Stopping active Aider process", correlation_id)
         CommandExecutor.stop_aider()
+        
+        -- Verify process termination
+        if state.job_id then
+            local wait_result = vim.fn.jobwait({ state.job_id }, 1000)[1]
+            Logger.debug("Process termination result: " .. tostring(wait_result), correlation_id)
+        end
     end
 
-    -- Hide window if visible
+    -- Hide window if visible (after process termination)
     if WindowManager.is_window_open() then
         WindowManager.hide_aider_window()
     end
 
-    -- Reset buffer state
-    if state.buf_id then
+    -- Reset buffer state only if process was active
+    if state.active and state.buf_id then
         BufferManager.reset_aider_buffer()
     end
 
-    -- Clear session state but preserve terminal state
-    local terminal_state = state.terminal_state
+    -- Clear session state while preserving UI configuration
     session.clear()
-    if terminal_state then
-        session.update({
-            terminal_state = terminal_state,
-        })
-    end
+    session.update({
+        layout = preserved_state.layout,
+        dimensions = preserved_state.dimensions,
+        terminal_state = preserved_state.terminal_state
+    })
 
     Logger.debug(
-        "Instance cleanup completed with preserved state: "
-            .. vim.inspect({ terminal_state = terminal_state }),
+        "Instance cleanup completed with preserved state: " .. vim.inspect(preserved_state),
         correlation_id
     )
 end

@@ -47,6 +47,10 @@ function WindowManager.show_window(buf, layout)
 
     -- Always get fresh buffer reference
     buf = BufferManager.get_or_create_aider_buffer()
+    
+    -- Restore terminal state if available
+    BufferManager.restore_terminal_state(buf)
+    Logger.debug("Terminal state restored for buffer", correlation_id)
 
     -- Check for existing aider window
     local wins = vim.api.nvim_tabpage_list_wins(0)
@@ -119,6 +123,14 @@ end
 
 function WindowManager.hide_aider_window()
     local current_win = vim.api.nvim_get_current_win()
+    local correlation_id = Logger.generate_correlation_id()
+    
+    local state = session.get()
+    -- Preserve terminal state before hiding
+    if state.buf_id then
+        Logger.debug("Preserving terminal state before hiding window", correlation_id)
+        BufferManager.preserve_terminal_state(state.buf_id)
+    end
     
     -- Find and close all aider windows
     vim.tbl_map(function(win)
@@ -129,7 +141,7 @@ function WindowManager.hide_aider_window()
         end
     end, vim.api.nvim_tabpage_list_wins(0))
 
-    -- Update session state
+    -- Update session state - only UI visibility changes
     session.update({ visible = false })
 
     -- Restore focus to previous window if valid
@@ -137,6 +149,7 @@ function WindowManager.hide_aider_window()
         pcall(vim.api.nvim_set_current_win, current_win)
     end
 
+    Logger.debug("Aider window hidden, process state preserved", correlation_id)
     return true
 end
 

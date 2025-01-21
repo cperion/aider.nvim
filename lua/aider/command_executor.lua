@@ -415,20 +415,35 @@ function M.stop_aider()
     local correlation_id = Logger.generate_correlation_id()
     Logger.debug("Stopping Aider instance", correlation_id)
 
-    -- Get job ID from session state
     local state = session.get()
     local job_id = state.job_id
+    local buf_id = state.buf_id
 
-    -- Clear session state first to prevent race conditions
+    -- Preserve terminal state before stopping
+    if buf_id and vim.api.nvim_buf_is_valid(buf_id) then
+        BufferManager.preserve_terminal_state(buf_id)
+        Logger.debug("Terminal state preserved", correlation_id)
+    end
+
+    -- Clear process state first to prevent race conditions
     session.update({
         active = false,
         job_id = nil,
+        context = {}
     })
 
     -- Stop the job if it's still running
-    if job_id and vim.fn.jobwait({ job_id }, 0)[1] == -1 then
-        pcall(vim.fn.jobstop, job_id)
-        Logger.debug("Stopped Aider job: " .. tostring(job_id), correlation_id)
+    if job_id then
+        local is_running = vim.fn.jobwait({ job_id }, 0)[1] == -1
+        if is_running then
+            local stop_success = pcall(vim.fn.jobstop, job_id)
+            Logger.debug("Stopped Aider job: " .. tostring(job_id) .. " (success: " .. tostring(stop_success) .. ")", correlation_id)
+            
+            -- Wait briefly for job to actually stop
+            vim.wait(100, function()
+                return vim.fn.jobwait({ job_id }, 0)[1] ~= -1
+            end)
+        end
     end
 
     -- Clear command queue
@@ -446,21 +461,52 @@ function M.on_aider_exit(exit_code)
     command_queue = {}
     is_executing = false
 
-    -- Clear context and update session state
+    -- Get current state to preserve UI settings
+    local state = session.get()
+    local current_layout = state.layout
+    local current_dimensions = state.dimensions
+    local terminal_state = state.terminal_state
+
+    -- Clear context and process state while preserving UI state
     ContextManager.update({})
     session.update({
         active = false,
         job_id = nil,
         context = {},
+        -- Preserve UI state
+        layout = current_layout,
+        dimensions = current_dimensions,
+        terminal_state = terminal_state
     })
 
-    -- Reset buffer state
-    BufferManager.reset_aider_buffer()
+    -- Handle buffer state based on exit condition
+    if exit_code == 0 then
+        -- Normal exit - preserve buffer state
+        if state.buf_id and vim.api.nvim_buf_is_valid(state.buf_id) then
+            BufferManager.preserve_terminal_state(state.buf_id)
+            Logger.debug("Terminal state preserved on normal exit", correlation_id)
+        end
+    else
+        -- Abnormal exit - reset buffer
+        BufferManager.reset_aider_buffer()
+        Logger.debug("Buffer reset due to abnormal exit", correlation_id)
+        
+        -- Schedule recovery if not already recovering
+        if not state.recovering then
+            vim.schedule(function()
+                M.handle_error("Aider process terminated unexpectedly with code " .. tostring(exit_code))
+            end)
+        end
+    end
 
     vim.schedule(function()
-        Logger.info("Aider finished" .. (exit_code and " with exit code " .. tostring(exit_code) or ""))
+        local message = exit_code == 0
+            and "Aider finished successfully"
+            or "Aider terminated with exit code " .. tostring(exit_code)
+        
+        Logger.info(message)
         if exit_code ~= 0 then
-            vim.notify("Aider exited with code " .. tostring(exit_code), vim.log.levels.WARN)
+            vim.notify(message, vim.log.levels.WARN)
         end
     end)
 

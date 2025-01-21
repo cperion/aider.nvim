@@ -1,17 +1,22 @@
 local M = {}
 
+-- State management with clear separation between process and UI concerns
 local state = {
-    active = false, -- If aider process is running
-    visible = false, -- If window is displayed
-    job_id = nil, -- Terminal job ID
-    buf_id = nil, -- Terminal buffer ID
-    layout = "vsplit", -- Last used layout
+    -- Process state
+    active = false,      -- If aider process is running
+    job_id = nil,        -- Terminal job ID
+    buf_id = nil,        -- Terminal buffer ID
+    context = {},        -- Current file context
+    terminal_state = nil, -- Preserved terminal state
+    
+    -- UI state
+    visible = false,     -- If window is displayed
+    layout = "vsplit",   -- Last used layout
     dimensions = {
         float = { width = 80, height = 20, pos = {1, 5} },
         vsplit = { width = 60 },
         hsplit = { height = 15 }
-    },
-    context = {}, -- Current file context
+    }
 }
 
 function M.validate()
@@ -61,17 +66,21 @@ end
 
 function M.clear()
     state = {
+        -- Process state
         active = false,
-        visible = false,
         job_id = nil,
         buf_id = nil,
+        context = {},
+        terminal_state = nil,
+        
+        -- UI state
+        visible = false,
         layout = "vsplit",
         dimensions = {
             float = { width = 80, height = 20, pos = {1, 5} },
             vsplit = { width = 60 },
             hsplit = { height = 15 }
-        },
-        context = {},
+        }
     }
     return state
 end
