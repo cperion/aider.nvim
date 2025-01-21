@@ -11,6 +11,9 @@ function WindowManager.show_window(buf, layout)
 	local correlation_id = Logger.generate_correlation_id()
 	Logger.debug("show_window: Starting with layout " .. tostring(layout), correlation_id)
 
+	-- Always get fresh buffer reference
+	buf = BufferManager.get_or_create_aider_buffer()
+
 	-- If there's an existing window, just focus it
 	if WindowManager.is_window_open() then
 		if aider_win and vim.api.nvim_win_is_valid(aider_win) then
