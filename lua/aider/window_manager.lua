@@ -1,4 +1,5 @@
 local Logger = require("aider.logger")
+local BufferManager = require("aider.buffer_manager")
 
 local WindowManager = {}
 local aider_win = nil
