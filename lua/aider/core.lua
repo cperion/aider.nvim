@@ -1,5 +1,8 @@
 local config = require("aider.config")
 local Logger = require("aider.logger")
+local WindowManager = require("aider.window_manager")
+local BufferManager = require("aider.buffer_manager")
+local CommandExecutor = require("aider.command_executor")
 
 local Aider = {}
 local current_layout = "vsplit"
