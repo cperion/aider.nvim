@@ -4,9 +4,21 @@ local session = require("aider.session")
 local BufferManager = {}
 
 function BufferManager.setup()
+    local correlation_id = Logger.generate_correlation_id()
+    Logger.debug("Starting BufferManager setup", correlation_id)
+    
+    -- Clear any existing invalid buffers first
+    BufferManager.reset_aider_buffer()
+    
+    -- Create fresh buffer
     local buf = BufferManager.get_or_create_aider_buffer()
-    session.update({ buf_id = buf })
-    Logger.debug("BufferManager setup complete")
+    if buf then
+        session.update({ buf_id = buf })
+        Logger.debug("BufferManager setup complete with buffer: " .. tostring(buf), correlation_id)
+    else
+        Logger.error("Failed to create aider buffer during setup", correlation_id)
+    end
+    return buf
 end
 
 function BufferManager.get_valid_buffers()
@@ -51,14 +63,27 @@ function BufferManager.get_valid_buffers()
 end
 
 function BufferManager.get_or_create_aider_buffer()
+    local correlation_id = Logger.generate_correlation_id()
     local state = session.get()
     local buf_id = state.buf_id
 
-    -- First try to find existing aider buffer
+    -- Validate existing buffer first
+    if buf_id and vim.api.nvim_buf_is_valid(buf_id) then
+        if BufferManager.is_aider_buffer(buf_id) then
+            Logger.debug("Using existing valid buffer: " .. tostring(buf_id), correlation_id)
+            return buf_id
+        else
+            Logger.warn("Existing buffer is not an aider buffer", correlation_id)
+            buf_id = nil
+        end
+    end
+
+    -- Search for any orphaned aider buffers
     if not buf_id then
         for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-            if BufferManager.is_aider_buffer(buf) then
+            if vim.api.nvim_buf_is_valid(buf) and BufferManager.is_aider_buffer(buf) then
                 buf_id = buf
+                Logger.debug("Found orphaned aider buffer: " .. tostring(buf), correlation_id)
                 break
             end
         end
@@ -66,25 +91,45 @@ function BufferManager.get_or_create_aider_buffer()
 
     -- Create new buffer if needed
     if not buf_id or not vim.api.nvim_buf_is_valid(buf_id) then
-        local buf = vim.api.nvim_create_buf(false, true)
-        if not buf then
+        Logger.debug("Creating new aider buffer", correlation_id)
+        local ok, buf = pcall(vim.api.nvim_create_buf, false, true)
+        if not ok or not buf then
+            Logger.error("Failed to create new buffer", correlation_id)
             return nil
         end
 
-        -- Set buffer-local identifier
-        pcall(vim.api.nvim_buf_set_var, buf, "is_aider_buffer", true)
+        -- Set buffer properties with error handling
+        local function set_buffer_property(fn)
+            local ok, err = pcall(fn)
+            if not ok then
+                Logger.warn("Failed to set buffer property: " .. tostring(err), correlation_id)
+            end
+        end
+
+        set_buffer_property(function()
+            vim.api.nvim_buf_set_var(buf, "is_aider_buffer", true)
+        end)
 
         local unique_id = string.format("%d_%d", os.time(), math.random(1000, 9999))
-        pcall(vim.api.nvim_buf_set_name, buf, "Aider_" .. unique_id)
+        set_buffer_property(function()
+            vim.api.nvim_buf_set_name(buf, "Aider_" .. unique_id)
+        end)
 
-        vim.bo[buf].swapfile = false
-        vim.bo[buf].bufhidden = "hide"
-        vim.bo[buf].buflisted = false
+        set_buffer_property(function()
+            vim.bo[buf].swapfile = false
+            vim.bo[buf].bufhidden = "hide"
+            vim.bo[buf].buflisted = false
+        end)
+
+        -- Set up buffer-local keymaps
+        set_buffer_property(function()
+            vim.keymap.set("n", "q", function()
+                require("aider.window_manager").hide_aider_window()
+            end, { silent = true, buffer = buf })
+        end)
 
         session.update({ buf_id = buf })
-        vim.keymap.set("n", "q", function()
-            require("aider.window_manager").hide_aider_window()
-        end, { silent = true, buffer = buf })
+        Logger.debug("Created new buffer: " .. tostring(buf), correlation_id)
 
         buf_id = buf
     end
@@ -161,16 +206,48 @@ function BufferManager.set_terminal_options(buf)
 end
 
 function BufferManager.get_aider_buffer()
-    return session.get().buf_id
+    local buf = session.get().buf_id
+    return buf and vim.api.nvim_buf_is_valid(buf) and buf or nil
 end
 
 function BufferManager.reset_aider_buffer()
+    local correlation_id = Logger.generate_correlation_id()
     local state = session.get()
+    
     if state.buf_id then
+        Logger.debug("Resetting aider buffer: " .. tostring(state.buf_id), correlation_id)
+        
+        -- Preserve terminal state before cleanup
+        pcall(BufferManager.preserve_terminal_state, state.buf_id)
+        
+        -- Remove buffer-local vars first
         if vim.api.nvim_buf_is_valid(state.buf_id) then
-            pcall(vim.api.nvim_buf_delete, state.buf_id, { force = true })
+            pcall(vim.api.nvim_buf_del_var, state.buf_id, "is_aider_buffer")
+            
+            -- Force close any windows showing this buffer
+            for _, win in ipairs(vim.api.nvim_list_wins()) do
+                if vim.api.nvim_win_is_valid(win) and
+                   vim.api.nvim_win_get_buf(win) == state.buf_id then
+                    pcall(vim.api.nvim_win_close, win, true)
+                end
+            end
+            
+            -- Delete the buffer with error handling
+            local ok, err = pcall(vim.api.nvim_buf_delete, state.buf_id, { force = true })
+            if not ok then
+                Logger.error("Failed to delete buffer: " .. tostring(err), correlation_id)
+            end
         end
-        session.update({ buf_id = nil })
+        
+        -- Clear session state
+        session.update({
+            buf_id = nil,
+            terminal_state = nil,
+            active = false,
+            visible = false
+        })
+        
+        Logger.debug("Aider buffer reset complete", correlation_id)
     end
 end
 

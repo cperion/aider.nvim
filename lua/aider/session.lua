@@ -20,28 +20,31 @@ local state = {
 }
 
 function M.validate()
-    -- Ensure all state references are valid
+    -- Primary validation: buffer state
+    if state.buf_id and not vim.api.nvim_buf_is_valid(state.buf_id) then
+        state.buf_id = nil
+        state.active = false
+        state.visible = false
+    end
+
+    -- Secondary validation: process state
     if state.job_id then
         state.active = vim.fn.jobwait({ state.job_id }, 0)[1] == -1
     else
         state.active = false
     end
 
-    -- Window visibility now determined by buffer presence
-    local wins = vim.api.nvim_tabpage_list_wins(0)
-    state.visible = false
-    for _, win in ipairs(wins) do
-        local buf = vim.api.nvim_win_get_buf(win)
-        if buf == state.buf_id then
-            state.visible = true
-            break
+    -- Visibility derived from buffer windows
+    if state.buf_id then
+        for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+            if vim.api.nvim_win_is_valid(win) and
+               vim.api.nvim_win_get_buf(win) == state.buf_id then
+                state.visible = true
+                return state
+            end
         end
     end
-
-    if state.buf_id and not vim.api.nvim_buf_is_valid(state.buf_id) then
-        state.buf_id = nil
-        state.active = false
-    end
+    state.visible = false
 
     return state
 end
