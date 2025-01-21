@@ -6,7 +6,7 @@ local Utils = require("aider.utils")
 
 local M = {}
 local aider_buf = nil
-local aider_job_id = nil
+local terminal_job_id = nil  -- Track terminal job separately
 local command_queue = {}
 local is_executing = false
 
@@ -37,7 +37,14 @@ function M.setup()
 end
 
 function M.is_aider_running()
-	return aider_job_id ~= nil and aider_job_id > 0
+    -- Check three-way validity:
+    return terminal_job_id ~= nil and          -- We have a job ID
+           aider_buf and                       -- Buffer reference exists
+           vim.api.nvim_buf_is_valid(aider_buf) and  -- Buffer is valid
+           pcall(function()
+               -- Buffer's terminal job matches our ID
+               return vim.api.nvim_buf_get_var(aider_buf, "terminal_job_id") == terminal_job_id
+           end)
 end
 
 function M.start_aider(buf, args, initial_context)
@@ -68,7 +75,10 @@ function M.start_aider(buf, args, initial_context)
     Logger.info("Starting Aider", correlation_id)
     Logger.debug("Command: " .. command, correlation_id)
 
-    -- Start the job using vim.fn.termopen and store the job ID
+    -- Clear previous job reference
+    terminal_job_id = nil
+    
+    -- Start new terminal job
     local job_id = vim.fn.termopen(command, {
         on_exit = function(job_id, exit_code, event_type)
             M.on_aider_exit(exit_code)
@@ -80,8 +90,8 @@ function M.start_aider(buf, args, initial_context)
         return
     end
 
-    -- Store both the job ID and buffer
-    aider_job_id = job_id
+    -- Store new job reference
+    terminal_job_id = job_id
     aider_buf = buf
 
     -- Set terminal options after terminal is opened
@@ -321,18 +331,16 @@ function M.on_buffer_close(bufnr)
 end
 
 function M.on_aider_exit(exit_code)
-	aider_job_id = nil
-	aider_buf = nil
-	command_queue = {}
-	is_executing = false
-	ContextManager.update({})
-	vim.schedule(function()
-		if exit_code ~= nil then
-			Logger.info("Aider finished with exit code " .. tostring(exit_code))
-		else
-			Logger.info("Aider finished")
-		end
-	end)
+    -- Clear job state but preserve buffer
+    terminal_job_id = nil
+    command_queue = {}
+    is_executing = false
+    ContextManager.update({})
+    
+    vim.schedule(function()
+        Logger.info("Aider finished" .. (exit_code and " with exit code "..tostring(exit_code) or ""))
+        -- Optional: Add visual feedback here
+    end)
 end
 
 return M

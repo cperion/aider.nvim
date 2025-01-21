@@ -44,11 +44,11 @@ function BufferManager.get_valid_buffers()
 end
 
 function BufferManager.get_or_create_aider_buffer()
-    -- If we have a valid buffer, return it
+    -- Return existing buffer if valid
     if aider_buf and vim.api.nvim_buf_is_valid(aider_buf) then
         return aider_buf
     end
-
+    
     -- Create new buffer
     local buf = vim.api.nvim_create_buf(false, true)
     if not buf then
@@ -58,13 +58,9 @@ function BufferManager.get_or_create_aider_buffer()
 
     -- Set initial buffer options
     vim.api.nvim_buf_set_name(buf, "Aider")
-    -- Only set these options if the buffer is valid
-    if vim.api.nvim_buf_is_valid(buf) then
-        -- These are the safe buffer options we can set
-        vim.bo[buf].swapfile = false
-        vim.bo[buf].bufhidden = "hide"
-        vim.bo[buf].buflisted = false
-    end
+    vim.bo[buf].swapfile = false
+    vim.bo[buf].bufhidden = "hide"
+    vim.bo[buf].buflisted = false
 
     aider_buf = buf
     -- Set up the 'q' keybinding for normal mode only

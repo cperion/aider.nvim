@@ -42,12 +42,15 @@ function Aider.open(args, layout)
     end
     Logger.debug("Final args: " .. tostring(final_args), correlation_id)
     
-    local buf = BufferManager.get_aider_buffer()
+    local buf = BufferManager.get_or_create_aider_buffer()
     local used_layout = layout or current_layout
+    
+    if not CommandExecutor.is_aider_running() then
+        local initial_context = BufferManager.get_context_buffers()
+        CommandExecutor.start_aider(buf, final_args, initial_context)
+    end
+    
     WindowManager.show_window(buf, used_layout)
-
-    local initial_context = BufferManager.get_context_buffers()
-    CommandExecutor.start_aider(buf, final_args, initial_context)
 
     Logger.debug("Aider window opened", correlation_id)
 end
