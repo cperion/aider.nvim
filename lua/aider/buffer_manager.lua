@@ -89,49 +89,51 @@ function BufferManager.get_or_create_aider_buffer()
         end
     end
 
-    -- Create new buffer if needed
-    if not buf_id or not vim.api.nvim_buf_is_valid(buf_id) then
-        Logger.debug("Creating new aider buffer", correlation_id)
-        local ok, buf = pcall(vim.api.nvim_create_buf, false, true)
-        if not ok or not buf then
-            Logger.error("Failed to create new buffer", correlation_id)
-            return nil
-        end
+    -- Create new terminal buffer if needed
+if not buf_id or not vim.api.nvim_buf_is_valid(buf_id) then
+    Logger.debug("Creating new aider terminal buffer", correlation_id)
+    local ok, buf = pcall(vim.api.nvim_create_buf, false, true)
+    if not ok or not buf then
+        Logger.error("Failed to create new buffer", correlation_id)
+        return nil
+    end
 
-        -- Set buffer properties with error handling
-        local function set_buffer_property(fn)
-            local ok, err = pcall(fn)
-            if not ok then
-                Logger.warn("Failed to set buffer property: " .. tostring(err), correlation_id)
-            end
-        end
+    -- Initialize terminal immediately
+    local command = "aider " .. config.get("aider_args")
+    local job_id = vim.fn.termopen(command, {
+        on_exit = function(_, code)
+            require("aider.command_executor").on_aider_exit(code)
+        end,
+    })
 
-        set_buffer_property(function()
-            vim.api.nvim_buf_set_var(buf, "is_aider_buffer", true)
-        end)
+    if job_id <= 0 then
+        Logger.error("Failed to initialize terminal", correlation_id)
+        return nil
+    end
 
-        local unique_id = string.format("%d_%d", os.time(), math.random(1000, 9999))
-        set_buffer_property(function()
-            vim.api.nvim_buf_set_name(buf, "Aider_" .. unique_id)
-        end)
+    -- Set buffer properties
+    pcall(vim.api.nvim_buf_set_var, buf, "is_aider_buffer", true)
 
-        set_buffer_property(function()
-            vim.bo[buf].swapfile = false
-            vim.bo[buf].bufhidden = "hide"
-            vim.bo[buf].buflisted = false
-        end)
+    local unique_id = string.format("%d_%d", os.time(), math.random(1000, 9999))
+    pcall(vim.api.nvim_buf_set_name, buf, "Aider_" .. unique_id)
 
-        -- Set up buffer-local keymaps
-        set_buffer_property(function()
-            vim.keymap.set("n", "q", function()
-                require("aider.window_manager").hide_aider_window()
-            end, { silent = true, buffer = buf })
-        end)
+    vim.bo[buf].swapfile = false
+    vim.bo[buf].bufhidden = "hide"
+    vim.bo[buf].buflisted = false
 
-        session.update({ buf_id = buf })
-        Logger.debug("Created new buffer: " .. tostring(buf), correlation_id)
+    -- Set up buffer-local keymaps
+    vim.keymap.set("n", "q", function()
+        require("aider.window_manager").hide_aider_window()
+    end, { silent = true, buffer = buf })
 
-        buf_id = buf
+    session.update({
+        buf_id = buf,
+        job_id = job_id,
+        active = true
+    })
+    Logger.debug("Created new terminal buffer: " .. tostring(buf), correlation_id)
+
+    buf_id = buf
     end
 
     return buf_id
@@ -174,7 +176,6 @@ function BufferManager.restore_terminal_state(buf)
         if state then
             Logger.debug("Restoring terminal state: " .. vim.inspect(state), correlation_id)
 
-            vim.bo[buf].buftype = "terminal"
             vim.bo[buf].bufhidden = "hide"
             if state.scrollback then
                 vim.bo[buf].scrollback = state.scrollback

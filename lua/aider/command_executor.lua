@@ -138,29 +138,8 @@ function M.start_aider(buf, args, initial_context)
         job_id = nil,
     })
 
-    -- Start new terminal job
-    local job_id = vim.fn.termopen(command, {
-        on_exit = function(job_id, exit_code, event_type)
-            M.on_aider_exit(exit_code)
-        end,
-    })
-
-    if job_id <= 0 then
-        Logger.error("Failed to start Aider job. Job ID: " .. tostring(job_id), correlation_id)
-        return false
-    end
-
-    -- Update session state
-    session.update({
-        active = true,
-        job_id = job_id,
-        buf_id = buf,
-    })
-
-    -- Set terminal options after terminal is opened
-    BufferManager.set_terminal_options(buf)
-
-    Logger.debug("Aider job started with job_id: " .. tostring(job_id), correlation_id)
+    -- The terminal is already initialized in BufferManager.get_or_create_aider_buffer()
+    Logger.debug("Using existing terminal job", correlation_id)
 
     ContextManager.update(initial_context)
     session.update({ context = initial_context })
